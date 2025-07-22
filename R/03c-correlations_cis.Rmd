@@ -1,0 +1,312 @@
+---
+title: "CIs for correlations: Geographic spillover of AMR in MORDOR at 24 months"
+# author: "Ariktha Srivathsan"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    df_print: paged
+    toc: true
+    toc_float: true
+    code_folding: hide
+---
+
+<style type="text/css">
+
+body{ /* Normal  */
+      font-size: 12px;
+  }
+td {  /* Table  */
+  font-size: 15px;
+}
+h1.title {
+  font-size: 26px;
+  color: Black;
+}
+h1 { /* Header 1 */
+  font-size: 24px;
+  color: Black;
+}
+h2 { /* Header 2 */
+    font-size: 20px;
+  color: Black;
+}
+h3 { /* Header 3 */
+  color: Black;
+}
+code.r{ /* Code block */
+    font-size: 12px;
+}
+pre { /* Code block - determines code spacing between lines */
+    font-size: 14px;
+}
+</style>
+
+
+```{r setup}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo = TRUE) 
+
+rm(list = ls())       
+
+library(here)
+library(gt)
+library(boot)
+library(moments)
+
+source(here("R", "00-config.R"))
+source(here("R", "00-functions.R"))
+
+```
+
+```{r Load data}
+
+# Load AMR data
+amr_dat <- readRDS(here("data", "final", "amr_dat.RDS"))
+
+# Load tx intensity data 
+morb_tx_int_raw <- readRDS(here("data", "final", "morb_tx_int.RDS"))
+
+# Tx intensity
+morb_tx_int <- morb_tx_int_raw %>% 
+  dplyr::select(grappe, arm, idw_power, tx_type, tx_int) %>%
+  left_join(amr_dat, by = "grappe") %>%
+  dplyr::filter(ab_class == "MLS", idw_power == 1)
+
+```
+
+```{r functions}
+
+# Bootstrap statistic function using safe_correlation
+spearman_rho_safe <- function(data, indices) {
+  d <- data[indices, ]
+  corr_tbl <- safe_correlation(d$tx_int, d$avg_res, est_only = TRUE)
+  return(corr_tbl$rho_est)
+}
+
+# Function to compute observed correlation + all CIs
+compute_boot_cor <- function(df) {
+  # Check for sufficient data
+  if(nrow(df) < 5) {
+    return(tibble(
+      rho_est = NA_real_,
+      ci_perc_lower = NA_real_,
+      ci_perc_upper = NA_real_,
+      ci_bc_lower = NA_real_,
+      ci_bc_upper = NA_real_,
+      ci_bca_lower = NA_real_,
+      ci_bca_upper = NA_real_,
+      boot_estimates = list(NA_real_)
+    ))
+  }
+  
+  # Observed estimate
+  corr_tbl <- safe_correlation(df$tx_int, df$avg_res, est_only = TRUE)
+  
+  # Bootstrap
+  set.seed(123)
+  boot_out <- boot(df, statistic = spearman_rho_safe, R = 5000)
+  
+  # Percentile CI
+  ci_perc <- boot.ci(boot_out, type = "perc")
+  ci_perc_lower <- if (!is.null(ci_perc$perc)) ci_perc$perc[4] else NA_real_
+  ci_perc_upper <- if (!is.null(ci_perc$perc)) ci_perc$perc[5] else NA_real_
+  
+  # BC CI
+  ci_bc <- boot.ci(boot_out, type = "basic")
+  ci_bc_lower <- if (!is.null(ci_bc$basic)) ci_bc$basic[4] else NA_real_
+  ci_bc_upper <- if (!is.null(ci_bc$basic)) ci_bc$basic[5] else NA_real_
+  
+  # BCa CI
+  ci_bca <- boot.ci(boot_out, type = "bca")
+  ci_bca_lower <- if (!is.null(ci_bca$bca)) ci_bca$bca[4] else NA_real_
+  ci_bca_upper <- if (!is.null(ci_bca$bca)) ci_bca$bca[5] else NA_real_
+  
+  tibble(
+    rho_est = corr_tbl$rho_est,
+    ci_perc_lower = ci_perc_lower,
+    ci_perc_upper = ci_perc_upper,
+    ci_bc_lower = ci_bc_lower,
+    ci_bc_upper = ci_bc_upper,
+    ci_bca_lower = ci_bca_lower,
+    ci_bca_upper = ci_bca_upper,
+    boot_estimates = list(boot_out$t[,1])  # Store all bootstrap estimates
+  )
+}
+```
+
+```{r estimate confidence intervals}
+
+cor_tx_int_ci <- morb_tx_int %>%
+  group_by(arm, phase, tx_type, idw_power) %>%
+  nest() %>%
+  mutate(cor_results = map(data, compute_boot_cor)) %>%
+  unnest(cor_results) %>%
+  ungroup() %>%
+  mutate(tx_type_name = factor(ifelse(tx_type == "azithro", "Primary analysis", "NCE"), 
+                               levels = c("Primary analysis", "NCE"), ordered = TRUE))
+
+```
+
+```{r plot bootstrap estimates}
+
+boot_estimates_df <- cor_tx_int_ci %>%
+  dplyr::select(arm, phase, tx_type_name, idw_power, boot_estimates) %>%
+  unnest(cols = boot_estimates)
+
+skew_kurt_df <- boot_estimates_df %>%
+  group_by(arm, phase, tx_type_name, idw_power) %>%
+  summarise(
+    skewness = skewness(boot_estimates, na.rm = TRUE),
+    kurtosis = kurtosis(boot_estimates, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+boot_estimates_df <- boot_estimates_df %>%
+  left_join(skew_kurt_df, by = c("arm", "phase", "tx_type_name", "idw_power")) %>%
+  mutate(
+    annot_text = paste0(
+      "Skewness: ", round(skewness, 2), "\n",
+      "Kurtosis: ", round(kurtosis, 2)
+    )
+  )
+
+# For annotation positioning, get one row per group
+annot_df <- boot_estimates_df %>%
+  group_by(arm, phase, tx_type_name, idw_power, annot_text) %>%
+  summarise(x = Inf, y = Inf, .groups = "drop") %>%
+  mutate(x = ifelse(arm == "azithro", 1, -1),
+         hj = ifelse(arm == "azithro", 1, 0))
+
+
+ggplot(boot_estimates_df, aes(x = boot_estimates, group = arm, color = arm, fill = arm)) +
+  geom_density(alpha = 0.3) +
+  facet_grid(tx_type_name ~ phase) +
+  geom_text(
+    data = annot_df,
+    aes(label = annot_text, x = x, y = y, hjust = hj),
+    vjust = 1.1, size = 3
+  ) +
+  labs(
+    title = "Density of bootstrap Spearman rho estimates",
+    x = "Spearman rho estimate",
+    y = "Density"
+  ) +
+  theme_minimal() + 
+  scale_color_manual(values = arms_colors) +
+  scale_fill_manual(values = arms_colors)
+
+```
+
+```{r tabulate correlations with CIs}
+
+summary_table <- cor_tx_int_ci %>%
+  dplyr::select(arm, phase, tx_type_name, idw_power,
+         rho_est,
+         ci_perc_lower, ci_perc_upper,
+         ci_bc_lower, ci_bc_upper,
+         ci_bca_lower, ci_bca_upper) %>%
+  mutate(
+    rho_est = round(rho_est, 3),
+    ci_perc_lower = round(ci_perc_lower, 3),
+    ci_perc_upper = round(ci_perc_upper, 3),
+    ci_bc_lower = round(ci_bc_lower, 3),
+    ci_bc_upper = round(ci_bc_upper, 3),
+    ci_bca_lower = round(ci_bca_lower, 3),
+    ci_bca_upper = round(ci_bca_upper, 3)
+  ) %>%
+  mutate(
+    Percentile_CI = paste0("[", ci_perc_lower, ", ", ci_perc_upper, "]"),
+    Basic_CI = paste0("[", ci_bc_lower, ", ", ci_bc_upper, "]"),
+    BCa_CI = paste0("[", ci_bca_lower, ", ", ci_bca_upper, "]")
+  ) %>%
+  dplyr::select(tx_type_name, arm, phase, rho_est, Percentile_CI, Basic_CI, BCa_CI) %>%
+  arrange(tx_type_name, arm, phase)
+
+# Create pretty table using gt
+gt_table <- summary_table %>%
+  gt(rowname_col = "tx_type_name") %>%
+  tab_header(
+    title = "Spearman Correlation Estimates and Bootstrap Confidence Intervals"
+  ) %>%
+  cols_label(
+    phase = "Phase",
+    tx_type_name = "Analysis",
+    rho_est = "Estimate (ρ)",
+    Percentile_CI = "Percentile CI",
+    Basic_CI = "Basic CI",
+    BCa_CI = "BCa CI"
+  ) %>%
+  fmt_missing(
+    columns = everything(),
+    missing_text = "NA"
+  ) %>%
+  cols_align(
+    align = "center",
+    columns = everything()
+  ) %>%
+  tab_options(
+    table.font.size = px(13),
+    data_row.padding = px(4)
+  )
+
+gt_table
+
+```
+
+
+```{r plot correlations with CIs}
+
+cor_tx_int_ci_long <- cor_tx_int_ci %>%
+  pivot_longer(
+    cols = c(ci_perc_lower, ci_perc_upper, ci_bc_lower, ci_bc_upper, ci_bca_lower, ci_bca_upper),
+    names_to = "ci_name",
+    values_to = "ci_value"
+  ) %>%
+  mutate(
+    ci_type = case_when(
+      str_detect(ci_name, "perc") ~ "Percentile",
+      str_detect(ci_name, "bc_lower|bc_upper") ~ "Basic (BC)",
+      str_detect(ci_name, "bca") ~ "BCa",
+      TRUE ~ NA_character_
+    ),
+    bound = case_when(
+      str_detect(ci_name, "lower") ~ "lower",
+      str_detect(ci_name, "upper") ~ "upper",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  dplyr::select(-ci_name) %>%
+  pivot_wider(
+    names_from = bound,
+    values_from = ci_value
+  ) %>%
+  mutate(
+    ci_type = factor(ci_type, levels = c("Percentile", "Basic (BC)", "BCa"), ordered = TRUE),
+    phase = factor(phase, levels = c("Baseline", "24 months"), ordered = TRUE)
+  )
+
+ggplot(cor_tx_int_ci_long, aes(x = ci_type, y = rho_est, color = arm, alpha = phase, group = interaction(phase, arm))) +
+  geom_point(position = position_dodge(width = 0.7), size = 3) +
+  geom_errorbar(aes(ymin = lower, ymax = upper),
+                width = 0.2,
+                position = position_dodge(width = 0.7)) +
+  facet_grid(vars(tx_type_name)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey50") +
+  labs(
+    y = "Spearman correlation (ρ)",
+    color = "Arm",
+    shape = "CI type",
+    linetype = "CI type"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "bottom",
+    panel.grid.minor = element_blank(),
+    axis.title.x = element_blank()
+  ) +
+  ylim(c(-1, 1)) +
+  scale_color_manual(values = arms_colors) +
+  scale_alpha_manual(values = c(0.35, 1), breaks = c("Baseline", "24 months"), name = "Phase") 
+
+ggsave(here("figs", "tx_int_corr_ci.png"), width = 8, height = 6, dpi = 600, bg = "white")
+
+```

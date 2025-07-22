@@ -1,0 +1,439 @@
+--
+title: "Manuscript figure 1 for between-cluster geographical spillover of AMR in MORDOR at 24 months"
+# author: "Ariktha Srivathsan"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    df_print: paged
+    toc: true
+    toc_float: true
+    code_folding: hide
+--
+
+<style type="text/css">
+
+body{ /* Normal  */
+      font-size: 12px;
+  }
+td {  /* Table  */
+  font-size: 15px;
+}
+h1.title {
+  font-size: 26px;
+  color: Black;
+}
+h1 { /* Header 1 */
+  font-size: 24px;
+  color: Black;
+}
+h2 { /* Header 2 */
+    font-size: 20px;
+  color: Black;
+}
+h3 { /* Header 3 */
+  color: Black;
+}
+code.r{ /* Code block */
+    font-size: 12px;
+}
+pre { /* Code block - determines code spacing between lines */
+    font-size: 14px;
+}
+</style>
+
+```{r setup}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo = TRUE,
+                      fig.width = 6, fig.height = 8, dpi = 300) 
+
+rm(list = ls())       
+
+library(here)
+library(ggspatial)
+library(patchwork)
+```
+
+```{r load data}
+
+source(here("R", "00-config.R"))
+
+morb_gps <- readRDS(here("data", "final", "morb_gps.RDS"))
+main_gps <- readRDS(here("data", "final", "main_gps.RDS"))
+
+morb_grappe <- readRDS(here("data", "final", "morb_grappe.RDS")) %>%
+  left_join(morb_gps, by = "grappe") %>%
+  st_as_sf(coords = c("longitude", "latitude"), crs = global_crs, remove = FALSE)
+main_grappe <- readRDS(here("data", "final", "main_grappe.RDS")) %>%
+  left_join(main_gps, by = "grappe") %>%
+  st_as_sf(coords = c("longitude", "latitude"), crs = global_crs, remove = FALSE)
+
+# Load Niger map from Humanitarian Data Exchange 
+# Map downloaded from https://data.humdata.org/dataset/cod-ab-ner on 9 April 2024
+
+niger_shp <- st_read(
+  here(
+    "data",
+    "untouched",
+    "niger_shapefiles",
+    "NER_admbnda_adm2_IGNN_20230720.shp"
+  )
+) %>%
+  mutate(mordor_states = ifelse(ADM2_FR %in% c("Falmey", "Boboye", "Loga"), TRUE, FALSE))
+
+africa_boundaries <- rnaturalearth::ne_countries(scale = 10,
+                                                 continent = "Africa",
+                                                 returnclass = "sf")
+niger_boundaries <- rnaturalearth::ne_states(country = "Niger", returnclass = "sf")
+
+# Load international boundaries map from Humanitarian Data Exchange
+# Map downloaded from https://data.humdata.org/dataset/global-international-boundaries-osm on 16 November 2024
+
+intl_boundaries_raw <- st_read(here("data", "untouched", "intl_boundaries", "adm0_polygons.gpkg"))
+
+# Load Tx Intensity Layer
+
+grid_tx_int_df <- readRDS(here("data", "final", "grid_tx_int_df.RDS"))
+```
+
+```{r Pre-process data}
+
+# Panel A: Niger map with MORDOR states highlighted and neighboring countries labelled
+
+intl_boundaries <- intl_boundaries_raw %>%
+  dplyr::filter(region1_nm == "Africa") %>%
+  dplyr::filter(
+    adm0_name %in% c(
+      "Benin",
+      "Burkina Faso",
+      "Chad",
+      "Libya",
+      "Mali",
+      "Nigeria",
+      "Algeria"
+    )
+  )
+
+neighbour_labels <- tibble(
+  country = c(
+    "Benin",
+    "Burkina\nFaso",
+    "Chad",
+    "Libya",
+    "Mali",
+    "Nigeria",
+    "Algeria"
+  ),
+  x = c(2.25, 0, 15, 14, 1.5, 7.5, 5),
+  y = c(10.5, 12.2, 14, 26, 17.5, 10, 24)
+)
+
+# Panel B - D
+# MORDOR regions map
+
+niger_union <- niger_shp %>% 
+  dplyr::filter(mordor_states == TRUE) # %>% st_union()
+
+# Panel C: Main trial grappes with azithromycin doses
+
+main_grappe_plot <- main_grappe %>% 
+  dplyr::select(grappe, arm, latitude, longitude, n_doses) %>% 
+  distinct()
+
+# Panel B: Main and morbidity trial grappe locations
+
+morb_grappe_plot <- morb_grappe %>%
+  dplyr::select(grappe, arm, latitude, longitude) %>%
+  distinct()
+
+all_grappes <- rbind(
+  main_grappe_plot %>%
+    dplyr::select(-n_doses) %>%
+    mutate(trial = "Mortality monitoring"),
+  morb_grappe_plot %>%
+    mutate(trial = "AMR monitoring")
+)
+
+```
+
+```{r Panel A}
+
+niger_map <- ggplot() +
+  geom_sf(data = intl_boundaries,
+          fill = NA,
+          color = "black") +
+  geom_text(data = neighbour_labels, aes(x = x, y = y, label = country), size = 3.5) +
+  geom_sf(
+    data = niger_shp,
+    aes(fill = mordor_states, alpha = mordor_states),
+    color = "black"
+  ) +
+  # geom_sf(
+  #   data = niger_boundaries,
+  #   fill = NA,
+  #   color = "black"
+  #   ) +
+  theme_minimal(base_size = 16) +
+  scale_fill_manual(breaks = c(TRUE, FALSE),
+                    values = c("navyblue", "lightgrey")) +
+  scale_alpha_manual(breaks = c(TRUE, FALSE), values = c(1, 1)) +
+  guides(fill = "none", alpha = "none") +
+  annotation_scale(aes(location = "br")) +
+  scale_x_continuous(name = "Longitude", limits = c(-0.75, 15.5)) +
+  scale_y_continuous(name = "Latitude", limits = c(7.61, 27.69))
+
+niger_map
+
+ggsave(
+  niger_map,
+  filename = here("figs", "manuscript", "fig1_panelA.png"),
+  width = 6,
+  height = 4,
+  dpi = 300
+)
+```
+
+```{r Panel B}
+
+all_grappes_plot <- ggplot() +
+  geom_sf(data = niger_shp, fill = "#f9fafa") +
+  geom_point(
+    data = all_grappes,
+    aes(
+      x = longitude,
+      y = latitude,
+      fill = factor(arm),
+      color = factor(arm),
+      alpha = trial,
+      shape = trial,
+      size = trial
+    )
+  ) +
+  theme_minimal(base_size = 16) +
+  scale_fill_manual(
+    values = arms_colors,
+    name = "Treatment",
+    labels = c("Azithromycin", "Placebo")
+  ) +
+  scale_color_manual(
+    values = c("grey50", "#003f5c"),
+    breaks = c("azithro", "placebo"),
+    name = "Treatment",
+    labels = c("Azithromycin", "Placebo")
+  ) +
+  scale_alpha_manual(
+    values = c(0.3, 1),
+    breaks = c("Mortality monitoring", "AMR monitoring"),
+    name = "Village type"
+  ) +
+  scale_shape_manual(
+    values = c(21, 23),
+    breaks = c("Mortality monitoring", "AMR monitoring"),
+    name = "Village type"
+  ) +
+  scale_size_manual(
+    values = c(1, 2),
+    breaks = c("Mortality monitoring", "AMR monitoring"),
+    name = "Village type"
+  ) +
+  scale_x_continuous(
+    breaks = c(2.4, 2.8, 3.2, 3.6),
+    limits = c(2.45, 3.78),
+    name = "Longitude"
+  ) +
+  scale_y_continuous(limits = c(12.28, 13.95), name = "Latitude") +
+  annotation_scale() +
+  theme(
+    legend.position = "inside",
+    legend.position.inside = c(0.75, 0.3),
+    legend.background = element_rect(fill = "white", color = NA)
+  ) +
+  guides(color = guide_legend(override.aes = list(color = arms_colors)))
+
+all_grappes_plot
+
+ggsave(
+  all_grappes_plot,
+  filename = here("figs", "manuscript", "fig1_panelB.png"),
+  width = 6,
+  height = 4,
+  dpi = 300
+)
+```
+
+```{r Panel B without morbidity villages}
+
+ggplot() +
+  geom_sf(data = niger_shp, fill = "#f9fafa") +
+  geom_point(
+    data = all_grappes,
+    aes(
+      x = longitude,
+      y = latitude,
+      fill = factor(arm),
+      color = factor(arm),
+      alpha = trial,
+      shape = trial,
+      size = trial
+    )
+  ) +
+  theme_minimal(base_size = 16) +
+  scale_fill_manual(
+    values = arms_colors,
+    name = "Treatment",
+    labels = c("Azithromycin", "Placebo")
+  ) +
+  scale_color_manual(
+    values = c("grey50", "#003f5c"),
+    breaks = c("azithro", "placebo"),
+    name = "Treatment",
+    labels = c("Azithromycin", "Placebo")
+  ) +
+  scale_alpha_manual(
+    values = c(0.3, 1),
+    breaks = c("Mortality monitoring", "AMR monitoring"),
+    name = "Village type"
+  ) +
+  scale_shape_manual(
+    values = c(21, 23),
+    breaks = c("Mortality monitoring", "AMR monitoring"),
+    name = "Village type"
+  ) +
+  scale_size_manual(
+    values = c(1, NA),
+    breaks = c("Mortality monitoring", "AMR monitoring"),
+    name = "Village type"
+  ) +
+  scale_x_continuous(
+    breaks = c(2.4, 2.8, 3.2, 3.6),
+    limits = c(2.45, 3.78),
+    name = "Longitude"
+  ) +
+  scale_y_continuous(limits = c(12.28, 13.95), name = "Latitude") +
+  annotation_scale() +
+  theme(
+    legend.position = "inside",
+    legend.position.inside = c(0.75, 0.3),
+    legend.background = element_rect(fill = "white", color = NA),
+    axis.title = element_blank(),
+    axis.text = element_blank()
+  ) +
+  guides(color = guide_legend(override.aes = list(color = arms_colors))) +
+  coord_sf()
+
+ggsave(
+  filename = here("figs", "manuscript", "fig1_panelB_no_legend_no_morb.png"),
+  width = 4.5,
+  height = 6,
+  dpi = 300,
+  bg = "white"
+)
+
+```
+
+```{r Panel C}
+
+n_doses_plot <- ggplot() +
+  geom_sf(data = niger_shp, fill = "#f9fafa") +
+  geom_point(
+    data = subset(main_grappe_plot, arm == "azithro"),
+    aes(
+      x = longitude,
+      y = latitude,
+      color = n_doses,
+      size = n_doses
+    ),
+    alpha = 0.4
+  ) +
+  scale_color_viridis_c(name = "Number of doses") +
+  scale_size_continuous(name = "Number of doses") +
+  scale_x_continuous(
+    breaks = c(2.4, 2.8, 3.2, 3.6),
+    limits = c(2.45, 3.78),
+    name = "Longitude"
+  ) +
+  scale_y_continuous(limits = c(12.28, 13.95), name = "Latitude") +
+  annotation_scale() +
+  theme_minimal(base_size = 16) +
+  theme(
+    legend.position = "inside",
+    legend.position.inside = c(0.75, 0.3),
+    legend.background = element_rect(fill = "white", color = NA)
+  ) +
+  guides(
+    color = guide_legend(override.aes = list(alpha = 0.7), reverse = TRUE),
+    size = guide_legend(reverse = TRUE)
+  )
+
+n_doses_plot
+
+ggsave(
+  n_doses_plot,
+  filename = here("figs", "manuscript", "fig1_panelC.png"),
+  width = 6,
+  height = 4,
+  dpi = 300
+)
+```
+
+```{r Panel D} 
+
+tx_int_layer_plot <- ggplot() + geom_sf(data = niger_shp, fill = "#f9fafa") +
+  geom_raster(data = subset(grid_tx_int_df, !is.na(z)), aes(x = x, y = y, fill = z)) +
+  geom_point(
+    data = morb_grappe_plot,
+    aes(x = longitude, y = latitude, shape = arm),
+    color = "white",
+    size = 2
+  ) +
+  guides(shape = guide_legend(override.aes = list(color = "black"))) +
+  scale_shape_manual(
+    breaks = c("azithro", "placebo"),
+    values = c(18, 3),
+    name = "Monitoring village\ntreatment",
+    labels = c("Azithromycin", "Placebo")
+  ) +
+  theme_minimal(base_size = 16) +
+  scale_x_continuous(
+    breaks = c(2.4, 2.8, 3.2, 3.6),
+    limits = c(2.45, 3.78),
+    name = "Longitude"
+  ) +
+  scale_y_continuous(limits = c(12.28, 13.95), name = "Latitude") + annotation_scale() +
+  scale_fill_viridis_c(name = "Treatment Intensity") +
+  theme(
+    legend.position = "inside",
+    legend.position.inside = c(0.75, 0.29),
+    legend.background = element_rect(fill = "white", color = NA),
+    legend.title = element_text(size = 12),
+    legend.text = element_text(size = 11),
+    legend.spacing.y = unit(0, 'cm')
+  )
+
+tx_int_layer_plot
+
+ggsave(
+  tx_int_layer_plot,
+  filename = here("figs", "manuscript", "fig1_panelD.png"),
+  width = 6,
+  height = 4,
+  dpi = 300
+)
+```
+
+```{r Combine panels and save figure}
+
+fig1_plot <-  (niger_map + all_grappes_plot + plot_layout(widths = c(1, 1))) / 
+              (n_doses_plot + tx_int_layer_plot + plot_layout(widths = c(1, 1))) + 
+    plot_annotation(tag_levels = 'A')
+
+ggsave(
+  fig1_plot,
+  filename = here("figs", "manuscript", "fig1.png"),
+  width = 10,
+  height = 12,
+  dpi = 300
+)
+
+knitr::include_graphics(here("figs", "manuscript", "fig1.png"))
+
+```
+

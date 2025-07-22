@@ -1,0 +1,214 @@
+---
+title: "Correlations for between-cluster spillover of AMR in MORDOR at 24 months"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    df_print: paged
+    toc: true
+    toc_float: true
+    code_folding: hide
+---
+
+<style type="text/css">
+
+body{ /* Normal  */
+      font-size: 12px;
+  }
+td {  /* Table  */
+  font-size: 15px;
+}
+h1.title {
+  font-size: 26px;
+  color: Black;
+}
+h1 { /* Header 1 */
+  font-size: 24px;
+  color: Black;
+}
+h2 { /* Header 2 */
+    font-size: 20px;
+  color: Black;
+}
+h3 { /* Header 3 */
+  color: Black;
+}
+code.r{ /* Code block */
+    font-size: 12px;
+}
+pre { /* Code block - determines code spacing between lines */
+    font-size: 14px;
+}
+</style>
+
+
+```{r setup}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo = TRUE) 
+
+rm(list = ls())       
+
+library(here)
+library(tictoc)
+library(boot)
+```
+
+Plot permutation distributions estimated
+
+```{r Load data}
+
+source(here("R", "00-config.R"))
+source(here("R", "00-functions.R"))
+
+# Load tx intensity correlation results 
+cor_tx_int <- readRDS(here("data", "final", "cor_tx_int.RDS"))
+tx_int_perm_dists <- readRDS(here("data", "detailed", "tx_int_perm_dists.RDS"))
+tx_int_pvals <- readRDS(here("data", "final", "tx_int_pvals.RDS"))
+
+# Load ring correlation results
+cor_ring <- readRDS(here("data", "final", "cor_ring.RDS"))
+ring_perm_dists <- readRDS(here("data", "detailed", "ring_perm_dists.RDS"))
+ring_pvals <- readRDS(here("data", "final", "ring_pvals.RDS"))
+
+```
+
+# Treatment intensity and AMR correlations
+
+```{r plot permutation distributions of tx int, eval = TRUE, fig.width = 8, fig.height = 5}
+
+tx_int_perm_plot <- tx_int_pvals %>%
+  dplyr::filter(ab_class == "MLS" & idw_power == 1) %>%
+  dplyr::select(arm, phase, tx_type, perm_rho) %>%
+  unnest(perm_rho)
+
+tx_int_perm_plot_R <- tx_int_pvals %>%
+  dplyr::filter(ab_class == "MLS" & idw_power == 1) %>%
+  dplyr::select(arm, phase, tx_type, perm_R) %>%
+  unnest(perm_R)
+
+cor_perm_plot1 <- cor_tx_int %>%
+  dplyr::filter(ab_class == "MLS" & idw_power == 1) %>%
+  dplyr::select(arm, phase, tx_type, contains("rho"), contains("R")) %>%
+  mutate(label = paste0("Observed rho: ", round(obs_rho, 2), 
+                        "\nPerm p: ", round(rho_perm_p, 2),
+                        "\nObs p: ", round(rho_obs_pval, 2)),
+         label_R = paste0("Observed R: ", round(obs_R, 2), 
+                        "\nPerm p: ", round(R_perm_p, 2),
+                        "\nObs p: ", round(R_obs_pval, 2)),
+         x = ifelse(arm == "azithro", 1, -1),
+         just = ifelse(arm == "azithro", 1, 0),
+         tx_type_text = factor(ifelse(tx_type == "azithro", "Tx int of Azithro", "NCE"), 
+                               levels = c("Tx int of Azithro", "NCE"), ordered = TRUE))
+
+tx_int_perm_densities_plot <- ggplot() +
+  geom_density(data = tx_int_perm_plot, aes(x = perm_rho, color = arm)) +
+  geom_vline(data = cor_perm_plot1, aes(xintercept = obs_rho, color = arm), linetype = "dashed") +
+  geom_text(data = cor_perm_plot1, aes(x = x, y = 3, hjust = just, label = label, color = arm), 
+            vjust = 1, size = 3, show.legend = FALSE) +  
+  geom_vline(xintercept = 0, color = "black") +
+  facet_grid(tx_type_text ~ phase, switch = "y") +
+  theme_minimal() +
+  scale_color_manual(breaks = c("azithro", "placebo"), values = arms_colors) +
+  scale_x_continuous(limits = c(-1, 1), name = "Correlation coefficient (rho)") +
+  theme(legend.position = "bottom")
+
+ggsave(here("figs", "perm_dist-tx_int.png"), 
+       plot = tx_int_perm_densities_plot,
+       width = 8, height = 5, bg = "white")
+
+tx_int_perm_densities_plotR <- ggplot() +
+  geom_density(data = tx_int_perm_plot_R, aes(x = perm_R, color = arm)) +
+  geom_vline(data = cor_perm_plot1, aes(xintercept = obs_R, color = arm), linetype = "dashed") +
+  geom_text(data = cor_perm_plot1, aes(x = x, y = 3, hjust = just, label = label_R, color = arm), 
+            vjust = 1, size = 3, show.legend = FALSE) +  
+  geom_vline(xintercept = 0, color = "black") +
+  facet_grid(tx_type_text ~ phase, switch = "y") +
+  theme_minimal() +
+  ggtitle("Pearson's correlation coefficient") +
+  scale_color_manual(breaks = c("azithro", "placebo"), values = arms_colors) +
+  scale_x_continuous(limits = c(-1, 1), name = "Pearson's Correlation coefficient (R)") +
+  theme(legend.position = "bottom")
+
+ggsave(here("figs", "perm_dist-tx_int-pearson.png"), 
+       plot = tx_int_perm_densities_plotR,
+       width = 8, height = 5, bg = "white")
+
+```
+
+![](/Users/ariktha/Library/CloudStorage/Box-Box/MORDOR Data/mordor-spillover/figs/perm_dist-tx_int.png)
+
+![](/Users/ariktha/Library/CloudStorage/Box-Box/MORDOR Data/mordor-spillover/figs/perm_dist-tx_int-pearson.png)
+
+# Doses in rings and AMR correlations
+
+```{r plot permutation distributions of ring data, eval = TRUE, fig.width = 9, fig.height = 8}
+
+rings_perm_plot <- ring_pvals %>%
+  dplyr::filter(ab_class == "MLS") %>%
+  dplyr::filter(ring_range_text %in% c("0 - 10 km", "10 - 20 km", "20 - 30 km")) %>%
+  dplyr::select(arm, phase, tx_type, ring_range_text, perm_rho) %>%
+  unnest(perm_rho)
+
+rings_perm_plotR <- ring_pvals %>%
+  dplyr::filter(ab_class == "MLS") %>%
+  dplyr::filter(ring_range_text %in% c("0 - 10 km", "10 - 20 km", "20 - 30 km")) %>%
+  dplyr::select(arm, phase, tx_type, ring_range_text, perm_R) %>%
+  unnest(perm_R)
+
+cor_perm_plot <- cor_ring %>%
+  dplyr::filter(ab_class == "MLS") %>%
+  dplyr::filter(ring_range_text %in% c("0 - 10 km", "10 - 20 km", "20 - 30 km")) %>%
+  dplyr::select(arm, phase, tx_type, ring_range_text, contains("rho"), contains("R")) %>%
+  mutate(label = paste0("Observed rho: ", round(obs_rho, 2), 
+                        "\nPerm p: ", round(rho_perm_p, 2),
+                        "\nObs p: ", round(rho_obs_pval, 2)),
+         label_R = paste0("Observed R: ", round(obs_R, 2),
+                        "\nPerm p: ", round(R_perm_p, 2),
+                        "\nObs p: ", round(R_obs_pval, 2)),
+         x = ifelse(arm == "azithro", 1, -1),
+         just = ifelse(arm == "azithro", 1, 0))
+
+ring_perm_densities_plot <- ggplot() +
+  geom_density(data = subset(rings_perm_plot, tx_type == "azithro"), aes(x = perm_rho, color = arm)) +
+  geom_vline(data = subset(cor_perm_plot, tx_type == "azithro"), aes(xintercept = obs_rho, color = arm), linetype = "dashed") +
+  geom_text(data = subset(cor_perm_plot, tx_type == "azithro"), aes(x = x, y = 6, hjust = just, label = label, color = arm), 
+            vjust = 1, size = 4, show.legend = FALSE) +  
+  geom_vline(xintercept = 0, color = "black") +
+  facet_grid(ring_range_text ~ phase, switch = "y") +
+  theme_minimal(base_size = 12) +
+  scale_color_manual(breaks = c("azithro", "placebo"), values = arms_colors) +
+  scale_x_continuous(limits = c(-1, 1), name = "Spearman correlation coefficient (rho)") +
+  theme(legend.position = "bottom") +
+  ggtitle("Permutations of ring correlations: Azithromycin doses and AMR")
+
+ring_perm_densities_plot
+
+ggsave(here("figs", "perm_dist-ring.png"), 
+       plot = ring_perm_densities_plot,
+       width = 9, height = 8 , bg = "white")
+
+
+ring_perm_densities_plotR <- ggplot() +
+  geom_density(data = subset(rings_perm_plotR, tx_type == "azithro"), aes(x = perm_R, color = arm)) +
+  geom_vline(data = subset(cor_perm_plot, tx_type == "azithro"), aes(xintercept = obs_R, color = arm), linetype = "dashed") +
+  geom_text(data = subset(cor_perm_plot, tx_type == "azithro"), aes(x = x, y = 6, hjust = just, label = label_R, color = arm), 
+            vjust = 1, size = 3, show.legend = FALSE) +  
+  geom_vline(xintercept = 0, color = "black") +
+  facet_grid(ring_range_text ~ phase, switch = "y") +
+  theme_minimal() +
+  scale_color_manual(breaks = c("azithro", "placebo"), values = arms_colors) +
+  scale_x_continuous(limits = c(-1, 1), name = "Pearson's Correlation coefficient (R)") +
+  theme(legend.position = "bottom") +
+  ggtitle("Permutations of ring correlations: Azithromycin doses and AMR",
+          subtitle = "Pearson's correlation coefficient")
+
+ring_perm_densities_plotR
+
+ggsave(here("figs", "perm_dist-ring-pearson.png"), 
+       plot = ring_perm_densities_plotR,
+       width = 9, height = 8, bg = "white")
+
+```
+
+![](/Users/ariktha/Library/CloudStorage/Box-Box/MORDOR Data/mordor-spillover/figs/perm_dist-ring.png)
+
+![](/Users/ariktha/Library/CloudStorage/Box-Box/MORDOR Data/mordor-spillover/figs/perm_dist-ring-pearson.png)
+
