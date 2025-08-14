@@ -1,3 +1,17 @@
+# Ignore everything in data except public
+data/*
+!data/public/
+!data/public/**
+
+# Ignore everything starting with an underscore
+_*
+_*/**
+
+# Ignore everything ending with -int
+*-int
+*-int.*
+*-int/**
+
 # History files
 .Rhistory
 .Rapp.history
@@ -47,3 +61,6 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# Mac system files
+*.DS_Store
