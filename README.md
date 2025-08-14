@@ -1,4 +1,6 @@
-# Geographic spillover of antimicrobial resistance (AMR) due to mass azithromycin distribution in the MORDOR trial in Niger
+# mordor-spillover
+
+## Geographic spillover of antimicrobial resistance (AMR) due to mass azithromycin distribution in the MORDOR trial in Niger
 
 ## Project Overview
 
