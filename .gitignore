@@ -3,6 +3,15 @@ data/*
 !data/public/
 !data/public/**
 
+# Ignore folders
+abstract/
+analysis-plan/
+data/
+figs/
+manuscript/
+scratchpad/
+slide-decks/
+
 # Ignore everything starting with an underscore
 _*
 _*/**
@@ -38,6 +47,8 @@ _*/**
 # produced vignettes
 vignettes/*.html
 vignettes/*.pdf
+*.html
+*.pdf
 
 # OAuth2 token, see https://github.com/hadley/httr/releases/tag/v0.3
 .httr-oauth
