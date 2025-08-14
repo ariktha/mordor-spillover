@@ -18,14 +18,6 @@ sf_use_s2(FALSE)
 
 library(parallel)
 
-# library(viridis)
-# library(patchwork)
-# library(ggpubr)
-# library(ggspatial)
-# library(geodata)
-# library(raster)
-# library(spatstat)
-
 data_folder_path <- "/Users/ariktha/Library/CloudStorage/Box-Box/MORDOR Data/data"
 n_cores <- max(1, parallel::detectCores() - 2)
 
