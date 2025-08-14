@@ -71,7 +71,9 @@ morb_tx <- morb_tx_int %>%
   pivot_longer(cols = ends_with("_int"),
                names_to = "tx_type",
                names_pattern = "(.*)_int",
-               values_to = "tx_int")
+               values_to = "tx_int") %>%
+  st_drop_geometry() %>%
+  dplyr::select(grappe, arm, idw_power, tx_type, tx_int) 
 
 # Generate Treatment Intensity Layer --------------------------------------
 

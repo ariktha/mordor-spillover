@@ -49,6 +49,9 @@ morb_tx <- ring_morb %>%
   rename(grappe = morbidity_grappe) %>%
   left_join(morb_grappe, by = "grappe")
 
+morb_tx_sub <- morb_tx %>%
+  dplyr::select(grappe, arm, ring_range_text, outer_radius, inner_radius, azithro_doses, placebo_doses)
+
 # Permutations ------------------------------------------------------------
 
 main_perm <- main_grappe %>%
@@ -78,6 +81,7 @@ perm_rings_df <- bind_rows(perm_rings_list, .id = "perm_id") %>%
 
 # Save data --------------------------------------------------------------
 
-saveRDS(morb_tx, here("data", "clean", "morb_rings.rds"))
+saveRDS(morb_tx_sub, here("data", "clean", "morb_rings.rds"))
+saveRDS(moirb_tx, here("data", "output", "morb_rings_full.rds"))
 saveRDS(perm_rings_df, here("data", "output", "perm_rings.rds"))
 
