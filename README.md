@@ -47,11 +47,11 @@ To reproduce all analyses in the paper, we recommend that you:
 
 2. Recreate the exact package environment using the `renv` package. 
 
-You can do this by opening the R project file ([mordor-spillover.Rproj](https://github.com/ariktha/mordor-spillover/blob/main/mordor-spillover.Rproj)) in RStudio, loading the `renv` package, and typing `renv::restore()` to restore the package environment from the projects [renv.lock](https://github.com/ariktha/mordor-spillover/blob/main/renv.lock) file. 
+ You can do this by opening the R project file ([mordor-spillover.Rproj](https://github.com/ariktha/mordor-spillover/blob/main/mordor-spillover.Rproj)) in RStudio, loading the `renv` package, and typing `renv::restore()` to restore the package environment from the projects [renv.lock](https://github.com/ariktha/mordor-spillover/blob/main/renv.lock) file. 
 
-3. Download the public data from the OSF repository by running the script [`01-washb-geopair-download-public-data.R`](https://github.com/ben-arnold/washb-geopair/blob/main/R/01-washb-geopair-download-public-data.R).
+3. Download the public data from the OSF repository by running the script [`00-download-public-data.R`](https://github.com/ariktha/mordor-spillover/blob/main/R/00-download-public-data.R).
   
-4. All of the analysis scripts should run smoothly (scripts `02-xx.Rmd` to `08-xx.Rmd`).  Note that scripts `09-13` and script `04` rely on geographic coordinates of study clusters that constitute personally identifiable information. Therefore, those scripts will not run (GPS data not publicly available), but the scripts have been provided for transparency.
+4. All of the analysis scripts should run smoothly (scripts `02-xx.Rmd` to `09-xx.Rmd`).  
 
 ### Additional details
 
