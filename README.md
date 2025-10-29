@@ -15,24 +15,56 @@ Key Finding: We found no evidence of geographic spillover of macrolide resistanc
   - MORDOR Mortality trial: [https://doi.org/10.1056/nejmoa1715474](https://doi.org/10.1056/nejmoa1715474)
   - MORDOR Morbidity (AMR-monitoring) trial: [https://www.nejm.org/doi/full/10.1056/NEJMc1901535](https://www.nejm.org/doi/full/10.1056/NEJMc1901535)
 
+If you have any questions about the files in this repository, please contact Ariktha Srivathsan or Ben Arnold at UCSF (ariktha.srivathsan@ucsf.edu; ben.arnold@ucsf.edu)
 
-## High-Level Script Specification
+## Code Submission Items
 
-All scripts are located in `mordor-spillover/R/`
+Following: https://www.nature.com/documents/nr-software-policy.pdf
+
+### System requirements
 
 `> sessionInfo()`
 
-`R version 4.5.0 (2025-04-11)`
+`R version 4.5.1 (2025-06-13)`
 
 `Platform: x86_64-apple-darwin20`
 
-`Running under: macOS Sequoia 15.5`
+`Running under: macOS Sequoia 15.6.1`
+
+All analyses were run using R version 4.5.1 (2025-06-13) -- "Great Square Root" on Mac OSX Sequoia (15.6.1) using the RStudio IDE (https://www.rstudio.com).
+In this repository we have used the `renv` package to archive the package versions so that you and reproduce the exact compute environment, should you wish to do so. 
+
+### Installation Guide and Instructions for Use
+
+- You can download and install R from CRAN: https://cran.r-project.org
+- You can download and install RStudio from their website: https://www.rstudio.com
+- All R packages required to run the analyses are sourced in the file `00-pkg-config.R`.
+- The installation time should be < 10 minutes total on a typical desktop computer.
+
+To reproduce all analyses in the paper, we recommend that you: 
+
+1. Clone the GitHub repository to your computer using `git clone https://github.com/ariktha/mordor-spillover.git` in the terminal
+
+2. Recreate the exact package environment using the `renv` package. 
+
+ You can do this by opening the R project file ([mordor-spillover.Rproj](https://github.com/ariktha/mordor-spillover/blob/main/mordor-spillover.Rproj)) in RStudio, loading the `renv` package, and typing `renv::restore()` to restore the package environment from the projects [renv.lock](https://github.com/ariktha/mordor-spillover/blob/main/renv.lock) file. 
+
+3. Download the public data from the OSF repository by running the script [`00-download-public-data.R`](https://github.com/ariktha/mordor-spillover/blob/main/R/00-download-public-data.R).
+  
+4. All of the analysis scripts should run smoothly (scripts `02-xx.Rmd` to `09-xx.Rmd`).  
+
+### Additional details
+
+- Scripts `01a-exposure_dm.R` and `01b-outcome_dm.R` process raw data and are provided for completeness. The resulting datasets are shared publicly in https://osf.io/bmjd3/ in csv and rds formats along with their codebooks.
+- These datasets can be downloaded using the script `00-download-public-data.R`.
+- GPS coordinates for village and health post locations cannot be made public due to privacy considerations. To facilitate code reproducibility, `00-download-public-data.R` generates synthetic example datasets with the same structure as the original data. Results produced using these synthetic datasets will differ from published results, which are based on the actual data.
 
 ## Repository Structure
 
 ### Core Scripts
 
 - **00-config.R**: Configuration file with global parameters, file paths, and study constants.
+- **00-pkg-config.R**: Loads all required packages.
 - **00-functions.R**: Helper and custom functions for distance calculations, permutation tests, and analysis routines.
 
 ### Data Preparation
@@ -56,9 +88,15 @@ All scripts are located in `mordor-spillover/R/`
 
 ### Confounding assessment: Health Facility data
 - **05-health_posts.Rmd**: Analyzes distance to closest health facility (CSI) for each village.
+- **05c-morb_v_main_csi.Rmd**
 
 ### Modelling
 - **06-log_linear_models.Rmd**: Fits log-linear models of AMR and treatment for spillover analysis.
+- **07-change-in-mls-analysis.Rmd**: Estimates correlations between the change in AMR reads and geographic treatment intensity.
+
+### Supplementary analyses
+- **08-indiv-data.qmd**
+- **09-mordor-spillover-NP.qmd**
 
 ### Manuscript Figures
 - **manuscript-fig-1.Rmd, manuscript-fig-2.Rmd, manuscript-fig-3.Rmd, manuscript-supp-figs.Rmd**: Code for generating main and supplementary figures for the manuscript.
