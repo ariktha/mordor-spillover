@@ -57,7 +57,7 @@ To reproduce all analyses in the paper, we recommend that you:
 
 - Scripts `01a-exposure_dm.R` and `01b-outcome_dm.R` process raw data and are provided for completeness. The resulting datasets are shared publicly in https://osf.io/bmjd3/ in csv and rds formats along with their codebooks.
 - These datasets can be downloaded using the script `00-download-public-data.R`.
-- - GPS coordinates for village and health post locations cannot be made public due to privacy considerations. To facilitate code reproducibility, `00-download-public-data.R` generates synthetic example datasets with the same structure as the original data. Results produced using these synthetic datasets will differ from published results, which are based on the actual data.
+- GPS coordinates for village and health post locations cannot be made public due to privacy considerations. To facilitate code reproducibility, `00-download-public-data.R` generates synthetic example datasets with the same structure as the original data. Results produced using these synthetic datasets will differ from published results, which are based on the actual data.
 
 ## Repository Structure
 
