@@ -54,40 +54,55 @@ library(here)
 ```{r load data}
 source(here("R", "00-config.R"))
 
-morb_rings_raw <- readRDS(here("data", "clean", "morb_rings.RDS"))
-
-amr_dat_raw <- readRDS(here("data", "clean", "amr_dat.RDS"))
-
 cor_rings <- readRDS(here("data", "output", "cor_ring.RDS"))
 
-morb_gps <- readRDS(here("data", "clean", "morb_gps.RDS"))
-main_gps <- readRDS(here("data", "clean", "main_gps.RDS"))
+if(run_public){
+  morb_gps <- readRDS(file.path(path_data_clean, "morb_gps.rds"))
+  main_gps <- readRDS(file.path(path_data_clean, "main_gps.rds"))
+  
+  morb_grappe <- readRDS(file.path(path_data_clean, "morb_grappe.rds")) %>%
+    left_join(morb_gps, by = "grappe") %>%
+    st_as_sf(coords = c("longitude", "latitude"), crs = global_crs, remove = FALSE)
+  main_grappe <- readRDS(file.path(path_data_clean, "main_grappe.rds")) %>%
+    left_join(main_gps, by = "grappe") %>%
+    st_as_sf(coords = c("longitude", "latitude"), crs = global_crs, remove = FALSE)
+  
+  morb_rings_raw <- readRDS(file.path(path_data_clean, "morb_rings.rds"))
+  amr_dat_raw <- readRDS(file.path(path_data_clean, "amr_dat.rds"))
 
-morb_grappe <- readRDS(here("data", "clean", "morb_grappe.RDS")) %>%
-  left_join(morb_gps, by = "grappe") %>%
-  st_as_sf(coords = c("longitude", "latitude"), crs = global_crs, remove = FALSE)
+  niger_shp <- st_read(file.path(path_data_clean, "niger_shapefiles", "NER_admbnda_adm2_IGNN_20230720.shp")) %>%
+    mutate(mordor_states = ifelse(ADM2_FR %in% c("Falmey", "Boboye", "Loga"), TRUE, FALSE)) %>%
+    dplyr::filter(mordor_states == TRUE)
+  
+} else {
+  morb_gps <- readRDS(file.path(path_internal, "morb_gps.rds"))
+  main_gps <- readRDS(file.path(path_internal, "main_gps.rds"))
+  
+  morb_grappe <- readRDS(file.path(path_internal, "morb_grappe.rds")) %>%
+    left_join(morb_gps, by = "grappe") %>%
+    st_as_sf(coords = c("longitude", "latitude"), crs = global_crs, remove = FALSE)
+  main_grappe <- readRDS(file.path(path_internal, "main_grappe.rds")) %>%
+    left_join(main_gps, by = "grappe") %>%
+    st_as_sf(coords = c("longitude", "latitude"), crs = global_crs, remove = FALSE)
+  
+  morb_rings_raw <- readRDS(file.path(path_internal, "morb_rings.rds"))
+  amr_dat_raw <- readRDS(file.path(path_internal, "amr_dat.rds"))
+  
+  niger_shp <- st_read(here("data", "untouched", "niger_shapefiles", "NER_admbnda_adm2_IGNN_20230720.shp")) %>%
+    mutate(mordor_states = ifelse(ADM2_FR %in% c("Falmey", "Boboye", "Loga"), TRUE, FALSE)) %>%
+    dplyr::filter(mordor_states == TRUE)
 
-main_grappe <- readRDS(here("data", "clean", "main_grappe.RDS")) %>%
-  left_join(main_gps, by = "grappe") %>%
-  st_as_sf(coords = c("longitude", "latitude"), crs = global_crs, remove = FALSE)
+}
 
-niger_shp_raw <- st_read(
-  here(
-    "data",
-    "untouched",
-    "niger_shapefiles",
-    "NER_admbnda_adm2_IGNN_20230720.shp"
-  )
-)
-
-niger_shp <- niger_shp_raw %>%
-  mutate(mordor_states = ifelse(ADM2_FR %in% c("Falmey", "Boboye", "Loga"), TRUE, FALSE)) %>%
-  dplyr::filter(mordor_states == TRUE)
 ```
 
 ```{r data prep}
 
-morb_grappe_names <- c("TEGOIZE KOIRA ZENO", "MOUNBEINA FANDOGA", "SETTI I", "TASSIEL")
+if(run_public){
+  morb_grappe_names <- c("community-1", "community-2", "community-3", "community-4")
+} else {
+  morb_grappe_names <- c("TEGOIZE KOIRA ZENO", "MOUNBEINA FANDOGA", "SETTI I", "TASSIEL")
+}
 
 morb_pt <- morb_grappe %>%
   dplyr::filter(grappe %in% morb_grappe_names)
@@ -137,7 +152,7 @@ morb_rings <- morb_rings %>%
 
 ```{r panel a}
 rings_map <- ggplot() + 
-  geom_sf(data = niger_shp_raw, fill = "#f9fafa") +
+  geom_sf(data = niger_shp, fill = "#f9fafa") +
   geom_point(data = main_grappe,
              aes(x = longitude, y = latitude, color = factor(arm)),
              alpha = 0.2) +

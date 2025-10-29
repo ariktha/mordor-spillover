@@ -1,0 +1,212 @@
+---
+title: "MORDOR AMR spillover: Individual-level rectal data"
+author: "Ariktha Srivathsan"
+format: 
+  html:
+    toc: true
+    code-fold: true
+    toc-depth: 3
+    fig-width: 8
+    fig-height: 6
+editor:
+  markdown:
+    wrap: 72
+execute:
+  cache: true
+  warning: false
+---
+
+```{r setup, include=FALSE}
+
+rm(list = ls())
+
+library(here)
+```
+
+```{r}
+#| label: load data
+
+source(here("R", "00-config.R"))
+source(here("R", "00-functions.R"))
+
+if(run_public){
+  morb_grappe <- readRDS(file.path(path_data_clean, "morb_grappe.rds"))
+  morb_tx_int <- readRDS(file.path(path_data_clean, "morb_tx_int.rds"))
+  amr_dat <- readRDS(file.path(path_data_clean, "amr_dat.rds"))
+
+} else {
+  morb_grappe <- readRDS(file.path(path_internal, "morb_grappe.rds"))
+  morb_tx_int <- readRDS(file.path(path_internal, "morb_tx_int.rds"))
+  amr_dat <- readRDS(file.path(path_internal, "amr_dat.rds"))
+  amr_indiv <- readRDS(file.path(path_internal, "amr_indiv.rds")) 
+}
+```
+
+```{r}
+#| label: data prep
+
+grappes <- morb_grappe %>%
+  group_by(arm) %>%
+  mutate(grappe_num = row_number()) %>%
+  ungroup() %>%
+  dplyr::select(grappe, arm, n_children, grappe_num)
+
+amr <- amr_indiv %>%
+  left_join(grappes,
+            by = join_by(grappe)) %>%
+  mutate(phase = factor(ifelse(phase == 0, "Baseline", "24 months"), 
+                        levels = c("Baseline", "24 months"), 
+                        ordered = TRUE))
+
+amr_grappe_summ <- amr %>%
+  group_by(grappe, grappe_num, arm, phase) %>%
+  summarise(n = n(),
+            n_zero = sum(ifelse(MLS == 0, 1, 0)),
+            prevalence = (n-n_zero)/n,
+            mean_mls = mean(MLS),
+            sd_mls = sd(MLS),
+            med_mls = median(MLS),
+            cv_mls = sd_mls/mean_mls,
+            se_mls = sd_mls/sqrt(n),
+            .groups = "drop") 
+
+```
+
+## Plots
+
+```{r}
+
+# ggplot() +
+#   geom_point(data = amr, aes(x = grappe, y = MLS), color = "grey") +
+#   geom_point(data = amr_grappe_summ, aes(x = grappe, y = mean_mls), color = "black", shape = 17) +
+#   theme_minimal(base_size = 14) +
+#   facet_wrap(~phase, nrow = 2, labeller = labeller(phase = c(`0` = "Baseline", `24` = "24 months"))) +
+#   theme(axis.text.x = element_blank()) +
+#   scale_y_continuous(name = "Normalized reads per million (MLS)")
+
+
+panelA <- ggplot() +
+  geom_point(data = amr, aes(x = grappe_num, y = MLS, color = arm, group = grappe_num), alpha = 0.5) +
+  geom_point(data = amr_grappe_summ, aes(x = grappe_num, y = mean_mls), color = "black", fill = "white", shape = 24) +
+  theme_minimal(base_size = 14) +
+  facet_grid(arm~phase, 
+             labeller = labeller(arm = c("placebo" = "Placebo", "azithro" = "Azithromycin"))) +
+  theme(axis.text.x = element_blank(),
+        legend.position = "bottom") +
+  scale_y_continuous(name = "MLS resistance abundance\n(normalized reads per million)") +
+  scale_color_manual(values = c("azithro" = "#f1a226", "placebo" = "#003f5c"),
+                     labels = c("azithro" = "Azithromycin", "placebo" = "Placebo"),
+                     name = "Monitoring village treatment") +
+  scale_x_discrete(name = "AMR-monitoring village")
+
+panelA
+
+# ggplot(data = amr_grappe_summ, aes(x = prevalence, y = mean_mls)) +
+#   geom_point(alpha = 0.6) +
+#   theme_minimal(base_size = 14) +
+#   scale_x_continuous(name = "Proportion non-zero (prevalence)",
+#                      breaks = c(0:10)) +
+#   scale_y_continuous(name = "Village-level average reads per million") +
+#   facet_wrap(~ phase, 
+#              labeller = labeller(phase = c(`0` = "Baseline", `24` = "24 months"))) +
+#   theme(legend.position = "none", panel.spacing = unit(1, "cm")) +
+#   ggpubr::stat_cor()
+
+ggplot(data = amr_grappe_summ, aes(x = prevalence, y = mean_mls)) +
+  geom_point(aes(color = arm), alpha = 0.6) +
+  theme_minimal(base_size = 14) +
+  scale_x_continuous(name = "Proportion of children with non-zero reads (prevalence)",
+                     breaks = seq(0, 1, by = 0.1),
+                     limits = c(0, 1)) +
+  scale_y_continuous(name = "Village-level average reads per million") +
+  scale_color_manual(values = c("azithro" = "#f1a226", "placebo" = "#003f5c")) +
+  facet_grid(arm ~ phase, 
+             labeller = labeller(phase = c(`0` = "Baseline", `24` = "24 months"),
+                                 arm = c("placebo" = "Placebo", "azithro" = "Azithromycin"))) +
+  theme(legend.position = "none",
+        panel.border = element_rect(fill = NA, color = "black")) +
+  ggpubr::stat_cor()
+
+```
+
+```{r}
+#| label: plot
+#| fig.height: 8
+#| fig.width: 6
+
+panelB <- ggplot(data = amr_grappe_summ, aes(x = prevalence, y = mean_mls, color = arm)) +
+  geom_point(alpha = 0.5) +
+  theme_minimal(base_size = 14) +
+  scale_x_continuous(name = "Proportion of children with non-zero reads (prevalence)",
+                     breaks = seq(0, 1, by = 0.2),
+                     limits = c(0, 1)) +
+  scale_y_continuous(name = "Mean MLS resistance abundance\n(normalized reads per million)") +
+  scale_color_manual(values = c("azithro" = "#f1a226", "placebo" = "#003f5c"),
+                     labels = c("azithro" = "Azithromycin", "placebo" = "Placebo"),
+                     name = "Monitoring village treatment") +
+  facet_grid(~phase, 
+             labeller = labeller(phase = c(`0` = "Baseline", `24` = "24 months"))) +
+  theme(legend.position = "bottom") +
+  ggpubr::stat_cor(show.legend = FALSE)
+
+panelB
+
+panelA / panelB +
+  plot_layout(heights = c(2, 1), guides = "collect") +
+  plot_annotation(tag_levels = "A") &
+  theme(legend.position = "bottom")
+
+ggsave(here("figs", "manuscript", "supp-figs", "supp_fig10.png"), width = 6, height = 8, dpi = 600)
+
+```
+
+```{r}
+#| label: plot primary figure
+
+morb_dat <- morb_tx_int %>%
+  dplyr::filter(idw_power == 1) %>%
+  dplyr::select(-idw_power) %>%
+  left_join(amr_dat %>%
+              dplyr::filter(ab_class == "MLS") %>%
+              dplyr::select(grappe, phase, avg_res) %>%
+              mutate(phase = factor(phase, levels = c("Baseline", "24 months"),
+                     ordered = TRUE)),
+            by = "grappe") %>%
+  left_join(amr_grappe_summ %>%
+              dplyr::select(grappe, phase, mean_mls, se_mls, prevalence),
+            by = c("grappe", "phase")) %>%
+  mutate(ci_lower = mean_mls - 1.96*se_mls,
+         ci_upper = mean_mls + 1.96*se_mls)
+
+ggplot(morb_dat) +
+  geom_point(aes(x = tx_int, y = mean_mls, color = arm)) +
+  geom_errorbar(aes(x = tx_int, ymin = ci_lower, ymax = ci_upper, color = arm), alpha = 0.6) +
+  facet_grid(tx_type ~ phase,
+             labeller = labeller(tx_type = c(azithro = "Primary exposure", placebo = "NCE"))) +
+  theme_minimal(base_size = 14) +
+  scale_color_manual(values = c("azithro" = "#f1a226", "placebo" = "#003f5c"),
+                     labels = c("azithro" = "Azithromycin", "placebo" = "Placebo"),
+                     name = "Monitoring village treatment") +
+  scale_x_continuous("Geographic treatment intensity") +
+  scale_y_continuous("Mean MLS resistance abundance") +
+  theme(legend.position = "bottom", panel.border = element_rect(fill = NA, color = "black"))
+```
+
+```{r}
+#| label: proportion plot
+
+ggplot(morb_dat, aes(x = tx_int, y = prevalence, color = arm)) +
+  geom_point() +
+  facet_grid(tx_type ~ phase,
+             labeller = labeller(tx_type = c(azithro = "Primary exposure", placebo = "NCE"))) +
+  theme_minimal(base_size = 14) +
+  scale_color_manual(values = c("azithro" = "#f1a226", "placebo" = "#003f5c"),
+                     labels = c("azithro" = "Azithromycin", "placebo" = "Placebo"),
+                     name = "Monitoring village treatment") +
+  scale_x_continuous("Geographic treatment intensity") +
+  scale_y_continuous("Prevalence of MLS resistance") +
+  theme(legend.position = "bottom", panel.border = element_rect(fill = NA, color = "black")) +
+  ggpubr::stat_cor(method = "spearman", cor.coef.name = "rho", p.digits = 0, label.x.npc = "right", hjust = 1,
+                   show.legend = FALSE) +
+  ggtitle("Prevalence of MLS resistance vs Tx int", subtitle = "p-values are observational")
+```

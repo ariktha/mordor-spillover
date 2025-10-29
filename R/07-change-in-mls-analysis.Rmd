@@ -24,11 +24,17 @@ source(here("R", "00-config.R"))
 source(here("R", "00-functions.R"))
 
 # Load MORDOR morbidity trial data
-morb_dat_raw <- readRDS(here("data", "clean", "morb_tx_int.RDS"))
 perm_dat_raw <- readRDS(here("data", "output", "perm_tx_int.RDS"))
 
-# Load AMR data
-amr_dat <- readRDS(here("data", "clean", "amr_dat.RDS"))
+if(run_public){
+  morb_dat_raw <- readRDS(file.path(path_data_clean, "morb_tx_int.rds"))
+  amr_dat <- readRDS(file.path(path_data_clean, "amr_dat.rds"))
+
+} else {
+  morb_dat_raw <- readRDS(file.path(path_internal, "morb_tx_int.rds"))
+  amr_dat <- readRDS(file.path(path_internal, "amr_dat.rds"))
+  
+}
 
 ```
 
@@ -433,8 +439,8 @@ mls_fold_change_plot <- panelAf / panelBf +
 
 mls_fold_change_plot
 
-ggsave(mls_change_plot, filename = here("figs", "reviewer-comments", "mls_abs_change.png"), 
-       width = 6, height = 8, dpi = 600, bg = "white")
+# ggsave(mls_change_plot, filename = here("figs", "reviewer-comments", "mls_abs_change.png"), 
+#        width = 6, height = 8, dpi = 600, bg = "white")
 
 ```
 

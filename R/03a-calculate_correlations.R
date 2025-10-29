@@ -20,16 +20,26 @@ source(here("R", "00-functions.R"))
 
 # Load data ---------------------------------------------------------------
 
+if(run_public){
+  morb_tx_int_raw <- readRDS(file.path(path_data_clean, "morb_tx_int.rds"))
+  morb_rings_raw <- readRDS(file.path(path_data_clean, "morb_rings.rds"))
+  
+  amr_dat <- readRDS(file.path(path_data_clean, "amr_dat.rds"))
+
+} else {
+  morb_tx_int_raw <- readRDS(file.path(path_internal, "morb_tx_int.rds"))
+  morb_rings_raw <- readRDS(file.path(path_internal, "morb_rings.rds"))
+  
+  amr_dat <- readRDS(file.path(path_internal, "amr_dat.rds"))
+  
+}
+
+
 # Load tx intensity data 
-morb_tx_int_raw <- readRDS(here("data", "clean", "morb_tx_int.RDS"))
-perm_tx_int_raw <- readRDS(here("data", "output", "perm_tx_int.RDS"))
+perm_tx_int_raw <- readRDS(here("data", "output", "perm_tx_int.rds"))
 
 # Load ring data
-morb_rings_raw <- readRDS(here("data", "clean", "morb_rings.RDS"))
-perm_rings_raw <- readRDS(here("data", "output", "perm_rings.RDS"))
-
-# Load AMR data
-amr_dat <- readRDS(here("data", "clean", "amr_dat.RDS"))
+perm_rings_raw <- readRDS(here("data", "output", "perm_rings.rds"))
 
 # Prepare data ------------------------------------------------------------
 
@@ -322,12 +332,12 @@ cor_ring <- cor_ring %>%
 # tx_int_perm_dists has the full nested df for each permutation
 # tx_int_pvals contains the permutation distributions of correlations along with the the p-values
 
-saveRDS(cor_tx_int, here("data", "output", "cor_tx_int.RDS"))
-saveRDS(tx_int_perm_dists, here("data", "output", "tx_int_perm_dists.RDS"))
-saveRDS(tx_int_pvals, here("data", "output", "tx_int_pvals.RDS"))
+saveRDS(cor_tx_int, here("data", "output", "cor_tx_int.rds"))
+saveRDS(tx_int_perm_dists, here("data", "output", "tx_int_perm_dists.rds"))
+saveRDS(tx_int_pvals, here("data", "output", "tx_int_pvals.rds"))
 
 ## Doses in rings and AMR correlations
 
-saveRDS(cor_ring, here("data", "output", "cor_ring.RDS"))
-saveRDS(ring_perm_dists, here("data", "output", "ring_perm_dists.RDS"))
-saveRDS(ring_pvals, here("data", "output", "ring_pvals.RDS"))
+saveRDS(cor_ring, here("data", "output", "cor_ring.rds"))
+saveRDS(ring_perm_dists, here("data", "output", "ring_perm_dists.rds"))
+saveRDS(ring_pvals, here("data", "output", "ring_pvals.rds"))

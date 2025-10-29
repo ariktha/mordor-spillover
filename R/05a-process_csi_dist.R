@@ -19,42 +19,57 @@ source(here("R", "00-config.R"))
 
 # Load MORDOR morbidity and main trial data
 
-morb_grappe <- readRDS(here("data", "clean", "morb_tx_int.RDS")) %>%
-  dplyr::select(grappe, arm)
+if(run_public){
+  morb_grappe <- readRDS(file.path(path_data_clean, "morb_grappe.rds")) %>%
+    dplyr::select(grappe, arm)
+  morb_gps <- readRDS(file.path(path_data_clean, "morb_gps.rds")) %>%
+    st_as_sf(coords = c("longitude", "latitude"), crs = global_crs)
 
-morb_gps <- readRDS(here("data", "clean", "morb_gps.RDS")) %>%
-  st_as_sf(coords = c("longitude", "latitude"), crs = global_crs)
+} else {
+  morb_grappe <- readRDS(file.path(path_internal, "morb_grappe.rds")) %>%
+    dplyr::select(grappe, arm)
+  morb_gps <- readRDS(file.path(path_internal, "morb_gps.rds")) %>%
+    st_as_sf(coords = c("longitude", "latitude"), crs = global_crs)
+}
 
-# Load data on CSI locations
-
-csi_loc_raw <- data.table::fread(here("data", "untouched", "cartesanitaire_niger_entites.csv"))
 
 # Prep CSI locations ------------------------------------------------------
 
-csi_loc <- csi_loc_raw %>% 
-  mutate(lat_lon = map(Coordinates, ~ {
-    if (!is.na(.x)) {
-      # Remove spaces and extract numbers
-      clean_coords <- gsub("\\s+", "", .x)
-      matches <- regmatches(clean_coords, gregexpr("-?\\d+\\.\\d+", clean_coords))[[1]]
-      if (length(matches) >= 2) {
-        as.numeric(matches)
+if(run_public){
+  csi_loc <- readRDS(file.path(path_internal, "csi_gps.RDS"))
+  
+} else {
+  
+  csi_loc_raw <- data.table::fread(here("data", "untouched", "cartesanitaire_niger_entites.csv"))
+  
+  csi_loc <- csi_loc_raw %>% 
+    mutate(lat_lon = map(Coordinates, ~ {
+      if (!is.na(.x)) {
+        # Remove spaces and extract numbers
+        clean_coords <- gsub("\\s+", "", .x)
+        matches <- regmatches(clean_coords, gregexpr("-?\\d+\\.\\d+", clean_coords))[[1]]
+        if (length(matches) >= 2) {
+          as.numeric(matches)
+        } else {
+          c(NA_real_, NA_real_)
+        }
       } else {
         c(NA_real_, NA_real_)
       }
-    } else {
-      c(NA_real_, NA_real_)
-    }
-  }),
-  latitude = map_dbl(lat_lon, 1),
-  longitude = map_dbl(lat_lon, 2)) %>%
-  dplyr::select(`Dhis2 Id`, latitude, longitude) %>%
-  drop_na() %>%
-  rename(dhis2_id = `Dhis2 Id`) %>%
-  st_as_sf(coords = c("latitude", "longitude"), crs = 4326) %>%
-  mutate(latitude = st_coordinates(.)[, 2],
-         longitude = st_coordinates(.)[, 1]) %>%
-  dplyr::filter(latitude != 0)
+    }),
+    latitude = map_dbl(lat_lon, 1),
+    longitude = map_dbl(lat_lon, 2)) %>%
+    dplyr::select(`Dhis2 Id`, latitude, longitude) %>%
+    drop_na() %>%
+    rename(dhis2_id = `Dhis2 Id`) %>%
+    st_as_sf(coords = c("latitude", "longitude"), crs = 4326) %>%
+    mutate(latitude = st_coordinates(.)[, 2],
+           longitude = st_coordinates(.)[, 1]) %>%
+    dplyr::filter(latitude != 0)
+  
+  saveRDS(csi_loc, file.path(path_internal, "csi_gps.RDS"))
+  
+}
 
 # Transform to global CRS
 

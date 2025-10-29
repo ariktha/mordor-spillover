@@ -50,6 +50,10 @@ amr_dat_long <- amr_dat %>%
                names_to = "ab_class", 
                values_to = "resistance")
 
+amr_indiv <- amr_dat_long %>%
+  dplyr::filter(ab_class == "MLS") %>%
+  dplyr::select(sample_id, grappe, phase, ab_class, resistance)
+
 # Add summary columns -----------------------------------------------------
 
 ##  Average resistance, SE of resistance, samples with non-zero resistance, 
@@ -76,7 +80,8 @@ amr_dat_final <- amr_data_summ %>%
 # Save outcome dataset ----------------------------------------------------
 
 saveRDS(amr_data_summ, here("data", "output", "amr_dat_full.rds"))
-saveRDS(amr_dat_final, here("data", "clean", "amr_dat.rds"))
+saveRDS(amr_dat_final, file.path(path_internal, "amr_dat.rds"))
+saveRDS(amr_indiv, file.path(path_internal, "amr_indiv.rds"))
 
 # Plots to check data -----------------------------------------------------
 
@@ -89,3 +94,38 @@ ggplot(amr_data_summ) + geom_boxplot(aes(y = perc_res, x = phase, group = phase)
 ggplot(amr_dat_long) + geom_boxplot(aes(y = resistance, x = grappe)) +
   facet_wrap(~phase+ab_class, scales = "free_y") +
   theme_minimal() + theme(axis.text.x = element_blank()) 
+
+
+# NP data -----------------------------------------------------------------
+
+np_raw <- read_csv(here("data", "untouched", "outcome", "MORDOR_0-12-24m_NP.csv"), show_col_types = FALSE)
+
+np_dat <- np_raw %>%
+  dplyr::select(
+    Arm,
+    Phase,
+    WHG,
+    contains("total sample"),
+    contains("Erythr")) %>%
+  drop_na(WHG) %>%
+  rename(
+    arm = Arm,
+    phase = Phase,
+    grappe = WHG,
+    n_tested = `total sample tested#`,
+    n_grew = `total sample grew#`,
+    n_res = `#Resistant_Erythr`) %>%
+  mutate(
+    prop_res = n_res / n_grew,
+    prop_res_test = n_res / n_tested) %>%
+  mutate(phase = case_when(
+    phase == "0" ~ "Baseline",
+    phase == "12" ~ "12 months",
+    phase == "24" ~ "24 months",
+    TRUE ~ NA_character_
+  )) %>%
+  mutate(phase = factor(phase, levels = c("Baseline", "12 months", "24 months")))
+
+saveRDS(np_dat, file.path(path_internal, "np_dat.rds"))
+
+

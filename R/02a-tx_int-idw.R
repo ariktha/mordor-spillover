@@ -21,13 +21,21 @@ source(here("R", "00-functions.R"))
 
 # Load MORDOR morbidity and main trial data
 
-morb_grappe <- readRDS(here("data", "clean", "morb_grappe.RDS"))
-main_grappe <- readRDS(here("data", "clean", "main_grappe.RDS"))
+if(run_public){
+  morb_grappe <- readRDS(file.path(path_data_clean, "morb_grappe.rds"))
+  main_grappe <- readRDS(file.path(path_data_clean, "main_grappe.rds"))
+  
+  morb_gps <- readRDS(file.path(path_data_clean, "morb_gps.rds"))
+  main_gps <- readRDS(file.path(path_data_clean, "main_gps.rds"))
+  
+} else {
+  morb_grappe <- readRDS(file.path(path_internal, "morb_grappe.rds"))
+  main_grappe <- readRDS(file.path(path_internal, "main_grappe.rds"))
+  
+  morb_gps <- readRDS(file.path(path_internal, "morb_gps.rds"))
+  main_gps <- readRDS(file.path(path_internal, "main_gps.rds"))
+}
 
-# Load gps data
-
-morb_gps <- readRDS(here("data", "clean", "morb_gps.RDS"))
-main_gps <- readRDS(here("data", "clean", "main_gps.RDS"))
 
 # Create distance matrix --------------------------------------------------
 
@@ -52,7 +60,7 @@ dist_main_morb <- compute_distance_matrix(
   left_join(main_grappe %>% st_drop_geometry(), 
             by = "main_grappe")
 
-saveRDS(dist_main_morb, here("data", "output", "dist_main_morb.RDS"))
+saveRDS(dist_main_morb, here("data", "output", "dist_main_morb.rds"))
 
 # Calculate treatment intensity at morbidity trial villages ---------------
 

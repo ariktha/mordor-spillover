@@ -1,0 +1,178 @@
+#--------------------------------------------
+#
+# mordor-spillover/R/00-download-public-data.R
+#
+# Geographic spillover of antimicrobial resistance 
+# from mass distribution of azithromycin in MORDOR Niger
+#
+# Download .rds versions of 
+# public datasets from osf.io 
+# and save them in the local working repository:
+# ~/mordor-spillover/data
+#
+# data are available here: https://osf.io/bmjd3
+#
+#------------------------------------
+
+library(here)
+
+source(here("R", "00-pkg-config.R"))
+
+
+if (!dir.exists(path_data_clean)) {
+  dir.create(path_data_clean, recursive = TRUE)
+}
+
+# OSF ---------------------------------------------------------------------
+
+# Exposure data
+
+## IDW treatment intensity
+### https://osf.io/qj64h
+morb_tx_int <- osf_retrieve_file("qj64h") %>%
+  osf_download(conflict = "overwrite", path = path_data_clean, progress = TRUE)
+
+## Doses in rings
+### https://osf.io/zm4dx
+morb_rings <- osf_retrieve_file("zm4dx") %>%
+  osf_download(conflict = "overwrite", path = path_data_clean, progress = TRUE)
+
+# Outcome data
+### https://osf.io/ybj8x
+amr_dat <- osf_retrieve_file("ybj8x") %>%
+  osf_download(conflict = "overwrite", path = path_data_clean, progress = TRUE)
+
+
+# Humanitarian Data Exchange ----------------------------------------------
+
+# Niger admin boundaries
+### Map downloaded from https://data.humdata.org/dataset/cod-ab-ner
+niger_shp_url <- "https://data.humdata.org/dataset/c0e0998c-b45a-4aea-ac06-c1de1d94e596/resource/3d941be1-4607-434a-8795-de8f1de51b34/download/ner_adm_ignn_20230720_ab_shp.zip"
+
+niger_zip <- file.path(path_data_clean, "niger_shapefiles.zip")
+niger_dir <- file.path(path_data_clean, "niger_shapefiles")
+
+download.file(niger_shp_url, destfile = niger_zip)
+
+if (!dir.exists(niger_dir)) {
+  dir.create(niger_dir, recursive = TRUE)
+}
+
+unzip(zipfile = niger_zip, exdir = niger_dir)
+
+# Meta high-resolution settlement layer
+### Data downloaded from https://data.humdata.org/dataset/highresolutionpopulationdensitymaps-ner#
+hrsl_gen_url <- "https://data.humdata.org/dataset/ab6939a8-2546-48db-836e-644150628a2d/resource/909222ae-b255-4ce6-99d5-f79c34136ebc/download/ner_general_2020_csv.zip"
+hrsl_u5_url <- "https://data.humdata.org/dataset/ab6939a8-2546-48db-836e-644150628a2d/resource/16904d18-99ac-4282-8656-37d7bca3df71/download/ner_children_under_five_2020_csv.zip"
+
+hrsl_gen_zip <- file.path(path_data_clean, "niger_popdens_general.zip")
+hrsl_u5_zip <- file.path(path_data_clean, "niger_popdens_u5.zip")
+
+download.file(hrsl_gen_url, destfile = hrsl_gen_zip)
+download.file(hrsl_u5_url, destfile = hrsl_u5_zip)
+
+unzip(zipfile = hrsl_gen_zip, exdir = path_data_clean)
+unzip(zipfile = hrsl_u5_zip, exdir = path_data_clean)
+
+# International boundaries shapefile
+### Map downloaded from https://data.humdata.org/dataset/global-international-boundaries-osm
+int_bound_url <- "https://data.fieldmaps.io/adm0/osm/intl/adm0_polygons.gpkg.zip"
+
+int_bound_zip <- file.path(path_data_clean, "intl_boundaries.zip")
+int_bound_dir <- file.path(path_data_clean, "intl_boundaries")
+
+if (!dir.exists(int_bound_dir)) {
+  dir.create(int_bound_dir, recursive = TRUE)
+}
+
+download.file(int_bound_url, destfile = int_bound_zip)
+unzip(zipfile = int_bound_zip, exdir = int_bound_dir)
+
+# Clean up zip files
+file.remove(niger_zip, hrsl_gen_zip, hrsl_u5_zip, int_bound_zip)
+
+
+# Generate random coordinates ---------------------------------------------
+
+set.seed(42)
+
+# Number of random locations to generate
+n_morb <- 30
+n_main <- 594
+n_csi <- 200 # There are 183 CSI locations in the 3 districts but closest is not always in the study region
+
+niger_shp <- st_read(
+  file.path(niger_dir, "NER_admbnda_adm2_IGNN_20230720.shp")
+) %>%
+  mutate(mordor_states = ifelse(ADM2_FR %in% c("Falmey", "Boboye", "Loga"), TRUE, FALSE)) %>%
+  dplyr::filter(mordor_states)
+
+niger_union <- st_union(niger_shp)
+
+# Function to generate random points within niger_union
+
+generate_random_points <- function(n_points, polygon) {
+  points <- st_sample(polygon, size = n_points, type = "random")
+  points_sf <- st_sf(geometry = points)
+  coords <- st_coordinates(points_sf)
+  coords_df <- as.data.frame(coords)
+  coords_df <- coords_df %>%
+    rename(longitude = X, latitude = Y)
+  return(coords_df)
+}
+
+# Generate and save random points
+
+## Morbidity trial GPS coordinates with grappe names
+
+morb_tx_int <- readRDS(file.path(path_data_clean, "morb_tx_int.rds")) %>%
+  dplyr::select(grappe, arm) %>%
+  distinct()
+
+morb_coords <- generate_random_points(n_morb, niger_union) %>%
+  mutate(grappe = morb_tx_int$grappe)
+
+saveRDS(morb_coords, file = file.path(path_data_clean, "morb_gps.rds"))
+
+## Main trial GPS coordinates
+main_coords <- generate_random_points(n_main, niger_union) %>%
+  mutate(grappe = paste0("main-trial-grappe-", 1:n_main))
+
+saveRDS(main_coords, file = file.path(path_data_clean, "main_gps.rds"))
+
+## CSI GPS coordinates
+
+csi_coords <- generate_random_points(n_csi, niger_union) %>%
+  mutate(id = paste0("csi-", 1:n_csi))
+
+saveRDS(csi_coords, file = file.path(path_data_clean, "csi_gps.rds"))
+
+
+# Sample number of children -----------------------------------------------
+
+set.seed(123)
+
+# Function to sample number of children from a Normal distribution
+
+mean_children <- 210
+sd_children <- 167.8572
+min_children <- 6
+
+morb_grappe <- morb_tx_int %>%
+  mutate(n_children = round(rnorm(n = n(), mean = mean_children, sd = sd_children))) %>%
+  mutate(n_children = ifelse(n_children < 0, min_children, round(n_children)),
+         treat_bin = ifelse(arm == "azithro", 1, 0))
+
+saveRDS(morb_grappe, file = file.path(path_data_clean, "morb_grappe.rds"))
+
+main_grappe <- data.frame(
+  grappe = paste0("main-trial-grappe-", 1:n_main)
+) %>%
+  mutate(n_children = round(rnorm(n = n(), mean = mean_children, sd = sd_children))) %>%
+  mutate(n_children = ifelse(n_children < 0, min_children, round(n_children))) %>%
+  mutate(arm = sample(c("azithro", "placebo"), size = n(), replace = TRUE, prob = c(0.5, 0.5))) %>%
+  mutate(treat_bin = ifelse(arm == "azithro", 1, 0),
+         n_treated = round(0.98*n_children),
+         n_doses = n_treated * 4)
+
+saveRDS(main_grappe, file = file.path(path_data_clean, "main_grappe.rds"))

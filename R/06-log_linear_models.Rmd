@@ -57,12 +57,19 @@ library(here)
 source(here("R", "00-config.R"))
 source(here("R", "00-functions.R"))
 
-# Load AMR data
-amr_dat_raw <- readRDS(here("data", "clean", "amr_dat.RDS"))
+if(run_public){
+  morb_tx_raw <- readRDS(file.path(path_data_clean, "morb_tx_int.rds"))
+  morb_rings_raw <- readRDS(file.path(path_data_clean, "morb_rings.rds"))
+  
+  amr_dat_raw <- readRDS(file.path(path_data_clean, "amr_dat.rds"))
 
-# Load treatment data
-morb_tx_raw <- readRDS(here("data", "clean", "morb_tx_int.RDS"))
-morb_rings_raw <- readRDS(here("data", "clean", "morb_rings.RDS"))
+} else {
+  morb_tx_raw <- readRDS(file.path(path_internal, "morb_tx_int.rds"))
+  morb_rings_raw <- readRDS(file.path(path_internal, "morb_rings.rds"))
+  
+  amr_dat_raw <- readRDS(file.path(path_internal, "amr_dat.rds"))
+  
+}
 
 # Load population and distance to nearest CSI estimates
 hrsl_rings_raw <- readRDS(here("data", "output", "hrsl_rings.RDS"))

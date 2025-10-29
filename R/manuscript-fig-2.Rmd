@@ -55,8 +55,16 @@ library(here)
 source(here("R", "00-config.R"))
 
 cor_tx_int_raw <- readRDS(here("data", "output", "cor_tx_int.RDS"))
-morb_tx_int_raw <- readRDS(here("data", "clean", "morb_tx_int.RDS"))
-amr_dat_raw <- readRDS(here("data", "clean", "amr_dat.RDS"))
+if(run_public){
+  morb_tx_int_raw <- readRDS(file.path(path_data_clean, "morb_tx_int.rds"))
+  amr_dat_raw <- readRDS(file.path(path_data_clean, "amr_dat.rds"))
+
+} else {
+  morb_tx_int_raw <- readRDS(file.path(path_internal, "morb_tx_int.rds"))
+  amr_dat_raw <- readRDS(file.path(path_internal, "amr_dat.rds"))
+  
+}
+
 ```
 
 ```{r data prep}

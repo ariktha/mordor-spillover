@@ -14,10 +14,14 @@ rm(list = ls())
 library(here)
 source(here("R", "00-pkg-config.R"))
 
-sf_use_s2(FALSE)
+run_public <- TRUE # Set to FALSE to use internal GPS data
 
+# File paths and parallel processing ----
 
 data_folder_path <- "/Users/ariktha/Library/CloudStorage/Box-Box/MORDOR Data/data"
+path_data_clean <- here("data", "clean")
+path_internal <- here("data", "internal-data")
+
 n_cores <- max(1, parallel::detectCores() - 2)
 
 # Coordinate Reference Systems ----

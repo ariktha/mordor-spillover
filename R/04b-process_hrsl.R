@@ -21,20 +21,36 @@ source(here("R", "00-functions.R"))
 # Load data ---------------------------------------------------------------
 
 # Load grappe data
-morb_gps <- readRDS(here("data", "clean", "morb_gps.RDS"))
-morb_grappe_raw <- readRDS(here("data", "clean", "morb_tx_int.RDS")) %>%
+
+if(run_public){
+  morb_grappe_raw <- readRDS(file.path(path_data_clean, "morb_grappe.rds"))
+  morb_gps <- readRDS(file.path(path_data_clean, "morb_gps.rds"))
+
+} else {
+  morb_grappe_raw <- readRDS(file.path(path_internal, "morb_grappe.rds"))
+  morb_gps <- readRDS(file.path(path_internal, "morb_gps.rds"))
+}
+
+morb_grappe_raw <- morb_grappe_raw %>%
   dplyr::select(grappe, arm)
 
 # Load Meta high-res population density data for Niger from Humanitarian Data Exchange 
 # Data downloaded from https://data.humdata.org/dataset/highresolutionpopulationdensitymaps-ner# on 13 November 2024
 ## Cropped using 04a-crop_hrsl.R script
 
-pop_raw <- readRDS(here("data", "output", "pop_crop.RDS"))
+pop_raw <- readRDS(here("data", "output", "pop_crop.rds"))
 
 # Load Niger map from Humanitarian Data Exchange 
 # Map downloaded from https://data.humdata.org/dataset/cod-ab-ner on 9 April 2024
 
-niger_shp <- st_read(here("data", "untouched", "niger_shapefiles", "NER_admbnda_adm2_IGNN_20230720.shp")) %>%
+if(run_public){
+  niger_shp <- st_read(file.path(path_data_clean, "niger_shapefiles", "NER_admbnda_adm2_IGNN_20230720.shp"))
+} else {
+  niger_shp <- st_read(here("data", "untouched", "niger_shapefiles", "NER_admbnda_adm2_IGNN_20230720.shp"))
+}
+
+
+niger_shp <- niger_shp %>%
   mutate(mordor_states = ifelse(ADM2_FR %in% c("Falmey", "Boboye", "Loga"), TRUE, FALSE))
 
 niger_union <- niger_shp %>% 
@@ -148,4 +164,4 @@ aggregated <- aggregated %>%
 
 # Save the aggregated data ------------------------------------------------
 
-saveRDS(aggregated, here("data", "output", "hrsl_rings.RDS"))
+saveRDS(aggregated, here("data", "output", "hrsl_rings.rds"))

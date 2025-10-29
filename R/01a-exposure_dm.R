@@ -129,10 +129,10 @@ morb_gps <- morb_gps_raw %>%
 
 # Save data ---------------------------------------------------------------
 
-saveRDS(main_grappe, here("data", "clean", "main_grappe.rds"))
-saveRDS(morb_grappe, here("data", "clean", "morb_grappe.rds"))
+saveRDS(main_grappe, file.path(path_internal, "main_grappe.rds"))
+saveRDS(morb_grappe, file.path(path_internal, "morb_grappe.rds"))
 
 # Save GPS data
 
-saveRDS(main_gps, here("data", "clean", "main_gps.rds"))
-saveRDS(morb_gps, here("data", "clean", "morb_gps.rds"))
+saveRDS(main_gps, file.path(path_internal, "main_gps.rds"))
+saveRDS(morb_gps, file.path(path_internal, "morb_gps.rds"))

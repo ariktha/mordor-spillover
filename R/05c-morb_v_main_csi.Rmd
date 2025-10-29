@@ -1,0 +1,142 @@
+---
+title: "Distance to closest CSI: Main and morbidity villages"
+# author: "Ariktha Srivathsan"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    df_print: paged
+    toc: true
+    toc_float: true
+    code_folding: hide
+---
+
+```{r setup}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo = TRUE) 
+
+rm(list = ls())       
+
+library(here)
+library(units)
+library(patchwork)
+library(ggpubr)
+```
+
+```{r Load data and functions}
+
+source(here("R", "00-config.R"))
+source(here("R", "00-functions.R"))
+
+# Load MORDOR morbidity and main trial data
+
+if(run_public){
+  morb_gps <- readRDS(file.path(path_data_clean, "morb_gps.rds")) %>%
+    st_as_sf(coords = c("longitude", "latitude"), crs = global_crs)
+  main_gps <- readRDS(file.path(path_data_clean, "main_gps.rds")) %>%
+    st_as_sf(coords = c("longitude", "latitude"), crs = global_crs)
+  
+  morb_grappe <- readRDS(file.path(path_data_clean, "morb_grappe.rds")) %>%
+    left_join(morb_gps, by = "grappe")
+  main_grappe <- readRDS(file.path(path_data_clean, "main_grappe.rds")) %>%
+    left_join(main_gps, by = "grappe")
+  
+  csi_loc <- readRDS(file.path(path_data_clean, "csi_gps.rds"))
+
+} else {
+  morb_gps <- readRDS(file.path(path_internal, "morb_gps.rds")) %>%
+    st_as_sf(coords = c("longitude", "latitude"), crs = global_crs)
+  main_gps <- readRDS(file.path(path_internal, "main_gps.rds")) %>%
+    st_as_sf(coords = c("longitude", "latitude"), crs = global_crs)
+  
+  morb_grappe <- readRDS(file.path(path_internal, "morb_grappe.rds")) %>%
+    left_join(morb_gps, by = "grappe")
+  main_grappe <- readRDS(file.path(path_internal, "main_grappe.rds")) %>%
+    left_join(main_gps, by = "grappe")
+  
+  csi_loc <- readRDS(file.path(path_internal, "csi_gps.rds"))
+}
+
+```
+
+```{r}
+
+csi_loc <- csi_loc %>%
+  drop_na() %>%
+  st_as_sf(coords = c("latitude", "longitude"), crs = 4326) %>%
+  mutate(latitude = st_coordinates(.)[, 2],
+         longitude = st_coordinates(.)[, 1])
+
+csi_proj <- st_transform(csi_loc, crs = proj_crs)
+morb_proj <- st_transform(morb_gps, crs = proj_crs)
+main_proj <- st_transform(main_gps, crs = proj_crs)
+
+# Create distance matrix --------------------------------------------------
+
+morb_csi <- st_distance(morb_proj, csi_proj, by_element = FALSE) %>%
+  units::set_units("km") %>%
+  as.matrix() %>%
+  as.data.frame() %>%
+  mutate(grappe = morb_proj$grappe) %>%
+  pivot_longer(-grappe, names_to = "dhis2_id", values_to = "distance") %>%
+  mutate(distance = as.numeric(distance))
+
+morb_nearest_csi <- morb_csi %>%
+  group_by(grappe) %>%
+  slice_min(distance, with_ties = FALSE) %>%
+  ungroup()
+
+morb_grappe <- morb_grappe %>% 
+  left_join(morb_nearest_csi, by = "grappe")
+
+main_csi <- st_distance(main_proj, csi_proj, by_element = FALSE) %>%
+  units::set_units("km") %>%
+  as.matrix() %>%
+  as.data.frame() %>%
+  mutate(grappe = main_proj$grappe) %>%
+  pivot_longer(-grappe, names_to = "dhis2_id", values_to = "distance") %>%
+  mutate(distance = as.numeric(distance))
+
+main_nearest_csi <- main_csi %>%
+  group_by(grappe) %>%
+  slice_min(distance, with_ties = FALSE) %>%
+  ungroup()
+
+main_grappe <- main_grappe %>% 
+  left_join(main_nearest_csi, by = "grappe")
+
+dist_long <- morb_grappe %>%
+  dplyr::select(grappe, distance) %>%
+  mutate(type = "morb") %>%
+  rbind(main_grappe %>%
+              dplyr::select(grappe, distance) %>%
+              mutate(type = "main"))
+
+dist_long %>%
+  group_by(type) %>%
+  summarise(mean_dist = mean(distance),
+            sd_dist = sd(distance),
+            median_dist = median(distance),
+            iqr_ll = quantile(distance, 0.25),
+            iqr_ul = quantile(distance, 0.75)) %>%
+  kable()
+
+```
+
+
+```{r plot}
+
+ggplot(dist_long, aes(x = distance, y = type, group = type)) +
+  geom_boxplot() +
+  geom_point(aes(alpha = type)) +
+  scale_x_continuous(name = "Distance to nearest health post (km)") +
+  scale_y_discrete(breaks = c("morb", "main"),
+                   label = c("AMR-monitoring\nvillages",
+                             "Mortality-monitoring\nvillages")) +
+  scale_alpha_manual(breaks = c("morb", "main"), values = c(0.5, 0)) +
+  theme_minimal() +
+  theme(axis.title.y = element_blank(), legend.position = "none")
+
+# ggsave(here("figs", "reviewer-comments", "main_morb_csi.png"), width = 6, height = 4)
+
+ggsave(here("figs", "manuscript", "supp-figs", "supp_fig10.png"), width = 6, height = 4)
+
+```

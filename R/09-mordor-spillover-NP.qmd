@@ -1,0 +1,482 @@
+---
+title: "MORDOR AMR spillover: 24 months, NP swabs"
+author: "Ariktha Srivathsan"
+format: 
+  html:
+    toc: true
+    code-fold: true
+    toc-depth: 3
+    fig-width: 8
+    fig-height: 6
+editor:
+  markdown:
+    wrap: 72
+execute:
+  cache: true
+  warning: false
+---
+
+```{r setup, include=FALSE}
+
+rm(list = ls())
+
+library(here)
+```
+
+```{r}
+#| label: load data
+
+source(here("R", "00-config.R"))
+source(here("R", "00-functions.R"))
+
+# Load NP data
+
+perm_tx_int_raw <- readRDS(here("data", "output", "perm_tx_int.RDS"))
+
+if(run_public){
+  morb_grappe <- readRDS(file.path(path_data_clean, "morb_grappe.rds"))
+  main_grappe <- readRDS(file.path(path_data_clean, "main_grappe.rds"))
+  
+  morb_tx_int <- readRDS(file.path(path_data_clean, "morb_tx_int.rds"))
+  morb_rings <- readRDS(file.path(path_data_clean, "morb_rings.rds"))
+  
+  morb_gps <- readRDS(file.path(path_data_clean, "morb_gps.rds"))
+  main_gps <- readRDS(file.path(path_data_clean, "main_gps.rds"))
+  
+  niger_shp <- readRDS(file.path(path_data_clean, "niger_shapefiles", "NER_admbnda_adm2_IGNN_20230720.shp"))
+  
+} else {
+  morb_grappe <- readRDS(file.path(path_internal, "morb_grappe.rds"))
+  main_grappe <- readRDS(file.path(path_internal, "main_grappe.rds"))
+  
+  morb_tx_int_raw <- readRDS(file.path(path_internal, "morb_tx_int.rds"))
+  morb_rings_raw <- readRDS(file.path(path_internal, "morb_rings.rds"))
+  
+  morb_gps <- readRDS(file.path(path_internal, "morb_gps.rds"))
+  main_gps <- readRDS(file.path(path_internal, "main_gps.rds"))
+  
+  np_dat <- readRDS(file.path(path_internal, "np_dat.rds"))
+  
+  niger_shp <- st_read(here("data", "untouched", "niger_shapefiles", "NER_admbnda_adm2_IGNN_20230720.shp"))
+  
+}
+
+niger_shp <- niger_shp %>%
+  mutate(mordor_states = ifelse(ADM2_FR %in% c("Falmey", "Boboye", "Loga"), TRUE, FALSE))
+
+
+```
+
+# NP data
+
+```{r}
+#| label: clean NP data
+
+
+np_summ <- np_dat %>%
+  group_by(phase, arm) %>%
+  summarise(
+    total_tested = sum(n_tested, na.rm = TRUE),
+    total_grew = sum(n_grew, na.rm = TRUE),
+    total_res = sum(n_res, na.rm = TRUE),
+    n_na_res = sum(is.na(prop_res)),
+    n = n()) %>%
+  ungroup() %>%
+  mutate(
+    overall_prop_res = total_res / total_grew,
+    overall_prop_res_test = total_res / total_tested
+  )
+    
+```
+
+## NP data summary
+
+### Table
+
+```{r}
+#| label: NP summary table
+
+np_summ %>%
+  group_by(phase) %>%
+  summarise(
+    total_tested = sum(total_tested),
+    total_grew = sum(total_grew),
+    total_res = sum(total_res),
+    n_na_res = sum(n_na_res),
+    n = sum(n)
+  ) %>%
+  kable(
+    col.names = c("Phase", "Total Tested", "Total Grew", "Total Resistant", "No Growth", "Total Villages"),
+    caption = "Summary of NP samples across all villages"
+  )
+
+np_summ %>%
+  dplyr::select(phase, arm, total_tested, total_grew, total_res, n_na_res, n) %>%
+  kable(
+    col.names = c("Phase", "Arm", "Total Tested", "Total Grew", "Total Resistant", "No Growth", "Total Villages"),
+    caption = "Summary of NP samples by treatment arm"
+  ) %>%
+  kable_styling(full_width = FALSE, position = "left")
+
+```
+
+### Boxplot
+
+```{r}
+#| label: NP boxplot
+#| fig-width: 8
+
+np_summ_plot <- np_summ %>%
+  mutate(txt = paste0("Total tested: ", total_tested, 
+                      "\nTotal grew: ", total_grew, 
+                      "\nTotal resistant: ", total_res,
+                      # "\nOverall proportion resistant (of those that grew): ", round(overall_prop_res, 3),
+                      # "\nOverall proportion resistant (of those tested): ", round(overall_prop_res_test, 3),
+                      "\n\nTotal villages: ", n,
+                      "\n0 grew in: ", n_na_res, " (", round(100*n_na_res/n, 1), "%)"),
+         txt2 = paste0("Total villages: ", n,
+                      "\n0 grew in: ", n_na_res, " (", round(100*n_na_res/n, 1), "%)")) %>%
+  mutate(y = ifelse(arm == "azithro", 10, 5.5),
+         y2 = ifelse(arm == "azithro", 1, 0.75))
+  
+
+ggplot(np_dat) +
+  geom_boxplot(aes(x = arm, y = prop_res, color = arm, fill = arm), alpha = 0.3) +
+  geom_jitter(aes(x = arm, y = prop_res, color = arm), width = 0.1, alpha = 0.5) +
+  geom_text(
+    data = np_summ_plot,
+    aes(
+      x = arm,
+      y = 1,
+      label = txt2,
+      color = arm
+    ),
+    hjust = 0.5,
+    vjust = 1,
+    size = 3
+  ) +
+  theme_minimal(base_size = 14) +
+  labs(
+    title = "Boxplot of Proportion Resistant in NP Samples",
+    x = "Treatment Arm",
+    y = "Proportion Resistant"
+  ) +
+  facet_wrap(~phase) +
+  scale_color_manual(values = c("azithro" = "#f1a226", "placebo" = "#003f5c")) +
+  scale_fill_manual(values = c("azithro" = "#f1a226", "placebo" = "#003f5c")) +
+  theme(legend.position = "bottom") +
+  ylim(0, 1) 
+
+```
+
+### Map
+
+```{r}
+#| label: NP summary map
+#| fig-width: 9
+
+np_plot_map <- np_dat %>%
+  mutate(zero_growth = ifelse(n_grew == 0, TRUE, FALSE)) %>%
+  left_join(morb_gps, by = "grappe") %>%
+  st_as_sf(coords = c("longitude", "latitude"), crs = global_crs, remove = FALSE) 
+
+ggplot() +
+  geom_sf(data = niger_shp %>% filter(mordor_states), fill = "white", color = "black", alpha = 0.5) +
+  geom_sf(data = subset(np_plot_map, zero_growth == FALSE), aes(color = arm, size = prop_res), shape = 16, alpha = 0.7) +
+  geom_sf(data = subset(np_plot_map, zero_growth == TRUE), aes(color = arm), shape = 2, alpha = 0.7) +
+  scale_color_manual(values = c("azithro" = "#f1a226", "placebo" = "#003f5c"), name = "Arm") +
+  theme_minimal(base_size = 14) +
+  labs(
+    title = "Map of Proportion Resistant in NP Samples at 24 Months",
+    subtitle = "Hollow triangles indicate villages with zero growth"
+  ) +
+  theme(legend.position = "bottom") +
+  facet_wrap(~phase) +
+  guides(x = "none", y = "none") +
+  scale_size_continuous(name = "Proportion Resistant", range = c(1, 10), limits = c(0, 1))
+
+```
+
+# Correlation between tx intensity and resistance in NP samples
+
+```{r}
+#| label: Estimate correlation between treatment intensity and resistance
+
+np_tx_int <- np_dat %>%
+  left_join(morb_tx_int %>% dplyr::filter(idw_power == 1), by = c("grappe", "arm"), relationship = "many-to-many") %>%
+  mutate(zero_growth = ifelse(n_grew == 0, TRUE, FALSE))
+
+np_corr <- np_tx_int %>%
+  group_by(arm, phase, tx_type) %>%
+  summarise(cor = unname(cor.test(tx_int, prop_res, method = "spearman", na.action(na.exclude))$estimate),
+            n = n()-sum(zero_growth)) %>%
+  ungroup()
+
+np_perm <- perm_tx_int_raw %>% 
+  dplyr::filter(idw_power == 1) %>%
+  left_join(np_dat, by = c("grappe"), relationship = "many-to-many") %>%
+  mutate(zero_growth = ifelse(n_grew == 0, TRUE, FALSE))
+
+np_perm_corr <- np_perm %>%
+  group_by(perm_id, arm, phase, tx_type) %>%
+  summarise(cor = unname(cor.test(tx_int, prop_res, method = "spearman", na.action(na.exclude))$estimate),
+            n = n()-sum(zero_growth)) %>%
+  ungroup()
+
+```
+
+```{r}
+#| label: Permutation test
+
+np_cor_lookup <- np_corr %>%
+  dplyr::select(arm, phase, tx_type, cor) %>%
+  {setNames(split(., seq(nrow(.))), 
+            paste(.$arm, .$phase, .$tx_type, sep = "_"))}
+
+np_perm_dists <- np_perm_corr %>%
+  mutate(lookup_key = paste(arm, phase, tx_type, sep = "_")) %>%
+  group_split(lookup_key, .keep = TRUE) 
+
+np_corr_pvals <- mclapply(np_perm_dists, function(group_data) {
+  tryCatch({
+    key <- unique(group_data$lookup_key)
+    obs_data <- np_cor_lookup[[key]]
+    obs_rho <- obs_data$cor
+
+    rho_pval <- tryCatch({
+      get_two_sided_pval(obs = obs_rho, empirical_dist = group_data$cor)
+    }, error = function(e) NA_real_)
+    
+    tibble(
+      arm = obs_data$arm[1],
+      phase = obs_data$phase[1], 
+      tx_type = obs_data$tx_type[1],
+      rho = obs_rho,
+      perm_p = rho_pval
+    )
+  }, error = function(e) {
+    warning(paste("Error processing group:", e$message))
+    # Return a row with NAs even when there's an error
+    tibble(
+      arm = group_data$arm[1],
+      phase = group_data$phase[1], 
+      tx_type = group_data$tx_type[1],
+      rho = obs_rho,
+      perm_p = NA_real_
+    )
+  })
+}, mc.cores = n_cores) %>%
+  bind_rows()
+
+# Add observed values to the results
+
+np_corr <- np_corr %>%
+  rename(rho = cor) %>%
+  left_join(np_corr_pvals, 
+            by = c("arm", "phase", "tx_type", "rho"))
+
+saveRDS(np_corr, here("data", "output", "np_corr.RDS"))
+
+```
+
+## Correlation results
+
+```{r}
+#| label: Correlation results table
+
+np_corr %>%
+  mutate(exposure = ifelse(tx_type == "azithro", "Primary exposure", "NCE")) %>%
+  dplyr::select(-tx_type) %>%
+  arrange(exposure, phase, arm) %>%
+  mutate(rho = round(rho, 3),
+         perm_p = round(perm_p, 3)) %>%
+  dplyr::select(exposure, phase, arm, n, rho, perm_p, n) %>%
+  kable(
+    col.names = c("Exposure", "Phase", "Arm", "N (excluding zero growth)", "Spearman's rho", "Permutation p-value"),
+    caption = "Correlation between Treatment Intensity and Proportion Resistant in NP Samples"
+  ) %>%
+  kable_styling(full_width = FALSE, position = "left")
+
+```
+
+### Scatterplots
+
+```{r}
+#| label: Scatterplot of correlation
+
+y_axis_title <- "Proportion of nasopharyngeal<br>*S. pneumoniae* with macrolide resistance"
+
+np_fig_txt <- np_corr %>%
+  mutate(plot_label = paste0(
+    'rho == ', sprintf("%.2f", rho), 
+    ' * "," ~ italic(p) == ', sprintf("%.2f", perm_p), 
+    ' * ";" ~ N == ', n
+  ),
+    y = ifelse(arm == "azithro", 0.9, 0.8),
+  y_perm = ifelse(arm == "azithro", 10, 8)
+  )
+
+tx_type_names <- c(`azithro` = "Primary exposure", `placebo` = "NCE")
+
+ggplot(data = np_tx_int, aes(x = tx_int, y = prop_res, color = arm)) +
+  geom_point(alpha = 0.5) +
+  geom_text(data = np_fig_txt, 
+            aes(y = y, color = arm, label = plot_label), 
+            x = 1,
+            hjust = 1,
+            parse = TRUE,
+            show.legend = FALSE) +
+  theme_minimal(base_size = 14) +
+  facet_grid(tx_type ~ phase, labeller = labeller(tx_type = tx_type_names)) +
+  theme(legend.position = "bottom",
+        panel.spacing = unit(0.75, "cm"),
+        axis.title.y = ggtext::element_markdown()) +
+  scale_y_continuous(limits = c(0, 1),
+                     name = y_axis_title) +
+  scale_x_continuous(limits = c(0, 1),
+                     name = "Geographic treatment intensity") +
+  scale_color_manual(
+    name = "Monitoring village treatment",
+    breaks = c("azithro", "placebo"),
+    labels = c("Azithromycin", "Placebo"),
+    values = arms_colors
+  )
+
+```
+
+```{r}
+#| label: Supplementary figure plot
+#| fig-width: 6
+#| fig-height: 8
+
+y_axis_title_fig <- "Proportion of nasopharyngeal *S. pneumoniae* with macrolide resistance"
+
+panelA <- ggplot(data = subset(np_tx_int, phase == "24 months" & tx_type == "azithro"), 
+       aes(x = tx_int, y = prop_res, color = arm)) +
+  geom_point(size = 3.5,
+             alpha = 0.6) +
+  geom_text(data = subset(np_fig_txt, phase == "24 months" & tx_type == "azithro"), 
+            aes(y = y, color = arm, label = plot_label), 
+            x = 1,
+            size = 5,
+            hjust = 1,
+            parse = TRUE,
+            show.legend = FALSE) +
+  theme_minimal(base_size = 14) +
+  theme(legend.position = "bottom", axis.title.y = ggtext::element_markdown()) +
+  scale_y_continuous(limits = c(0, 1),
+                     name = y_axis_title_fig) +
+  scale_x_continuous(limits = c(0, 1),
+                     name = "Geographic treatment intensity of azithromycin") +
+  scale_color_manual(
+    name = "Monitoring village treatment",
+    breaks = c("azithro", "placebo"),
+    labels = c("Azithromycin", "Placebo"),
+    values = arms_colors
+  ) +
+  ggtitle("A")
+
+panelB <- ggplot(data = subset(np_tx_int, phase == "24 months" & tx_type == "placebo"), 
+       aes(x = tx_int, y = prop_res, color = arm)) +
+  geom_point(size = 3.5,
+             alpha = 0.6) +
+  geom_text(data = subset(np_fig_txt, phase == "24 months" & tx_type == "placebo"), 
+            aes(y = y, color = arm, label = plot_label), 
+            x = 1,
+            size = 5,
+            hjust = 1,
+            parse = TRUE,
+            show.legend = FALSE) +
+  theme_minimal(base_size = 14) +
+  theme(legend.position = "bottom", axis.title.y = ggtext::element_markdown()) +
+  scale_y_continuous(limits = c(0, 1),
+                     name = y_axis_title_fig) +
+  scale_x_continuous(limits = c(0, 1),
+                     name = "Geographic treatment intensity of placebo") +
+  scale_color_manual(
+    name = "Monitoring village treatment",
+    breaks = c("azithro", "placebo"),
+    labels = c("Azithromycin", "Placebo"),
+    values = arms_colors
+  ) +
+  ggtitle("B")
+
+supp_fig_np <- panelA / panelB +
+    # plot_annotation(tag_levels = 'A') +
+  plot_layout(guides = "collect", axes = "collect_y") & theme(legend.position = "bottom")
+
+ggsave(supp_fig_np, filename = here("figs", "manuscript", "supp-figs", "supp_fig8-np.png"), 
+       width = 6, height = 8, dpi = 600, bg = "white")
+
+supp_fig_np
+```
+
+**Supplementary figure 8**: Relationship between geographic treatment
+intensity and the proportion of nasopharyngeal S. pneumoniae that were
+macrolide-resistant at 24 months.
+
+A. Relationship between the azithromycin treatment intensity and the
+village-level proportion of S. pneumoniae, isolated from nasopharyngeal
+swabs, that was resistant to erythromycin at 24 months, estimated as
+Spearman rank-order correlations (ρ). Points represent anti-microbial
+resistance (AMR) monitoring villages, with azithromycin-treated villages
+in yellow and placebo-treated villages in blue.
+
+B. Relationship between the placebo treatment intensity (negative
+control exposure) and the proportion of S. pneumoniae that was resistant
+to erythromycin at 24 months.
+
+The sample size, N, is the number of villages in which pneumococcus was
+isolated from at least one of the children sampled and were therefore
+included in the correlation calculation. All p-values are two-sided and
+derived from a permutation test.
+
+### Permutation distributions
+
+```{r}
+#| label: Permutation distributions
+
+perm_combined <- bind_rows(np_perm_dists)
+
+ggplot(perm_combined, aes(x = cor, color = arm, fill = arm)) +
+  geom_vline(xintercept = 0, color = "black", linewidth = 0.3) +
+  geom_density(alpha = 0.3) +
+  geom_vline(data = np_corr, 
+             aes(xintercept = rho, color = arm),
+             linetype = "dotted",
+             linewidth = 0.8) +
+  geom_label(data = np_fig_txt, 
+            aes(y = y_perm, color = arm, label = plot_label), 
+            x = 1,
+            hjust = 1,
+            vjust = 1,
+            parse = TRUE,
+            show.legend = FALSE,
+            fill = "white") +
+  facet_grid(tx_type ~ phase,
+             labeller = labeller(tx_type = tx_type_names)) +
+  scale_x_continuous(name = "Spearman Correlation", limits = c(-1, 1)) +
+  scale_y_continuous(name = "Density", limits = c(0, 10)) +
+  scale_color_manual(
+    name = "Monitoring village treatment",
+    breaks = c("azithro", "placebo"),
+    labels = c("Azithromycin", "Placebo"),
+    values = arms_colors
+  ) +
+  scale_fill_manual(
+    name = "Monitoring village treatment",
+    breaks = c("azithro", "placebo"),
+    labels = c("Azithromycin", "Placebo"),
+    values = arms_colors
+  ) +
+  labs(
+    title = "Permutation Null Distributions with Observed Correlations"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "bottom",
+    panel.spacing = unit(1, "lines")
+  )
+
+
+```

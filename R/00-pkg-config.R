@@ -19,6 +19,7 @@ library(parallel)
 library(units)
 library(tictoc)
 library(renv)
+library(osfr)
 
 # Visuals -----------------------------------------------------------------
 
@@ -33,4 +34,7 @@ library(kableExtra)
 # Spatial packages --------------------------------------------------------
 
 library(sf)
+sf_use_s2(FALSE)
+
 library(raster)
+library(lwgeom)

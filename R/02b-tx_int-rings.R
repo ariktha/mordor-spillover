@@ -21,17 +21,27 @@ source(here("R", "00-functions.R"))
 
 # Load MORDOR morbidity and main trial data
 
-morb_grappe <- readRDS(here("data", "clean", "morb_grappe.RDS"))
-main_grappe <- readRDS(here("data", "clean", "main_grappe.RDS"))
+if(run_public){
+  morb_grappe <- readRDS(file.path(path_data_clean, "morb_grappe.rds"))
+  main_grappe <- readRDS(file.path(path_data_clean, "main_grappe.rds"))
+} else {
+  morb_grappe <- readRDS(file.path(path_internal, "morb_grappe.rds"))
+  main_grappe <- readRDS(file.path(path_internal, "main_grappe.rds"))
+}
 
 # Load gps data
 
-morb_gps <- readRDS(here("data", "clean", "morb_gps.RDS"))
-main_gps <- readRDS(here("data", "clean", "main_gps.RDS"))
+if(run_public){
+  morb_gps <- readRDS(file.path(path_data_clean, "morb_gps.rds"))
+  main_gps <- readRDS(file.path(path_data_clean, "main_gps.rds"))
+} else {
+  morb_gps <- readRDS(file.path(path_internal, "morb_gps.rds"))
+  main_gps <- readRDS(file.path(path_internal, "main_gps.rds"))
+}
 
 # Load distance matrix
 
-dist_main_morb <- readRDS(here("data", "output", "dist_main_morb.RDS")) 
+dist_main_morb <- readRDS(here("data", "output", "dist_main_morb.rds")) 
 
 # Doses within concentric rings ------------------------------------------
 
@@ -50,7 +60,7 @@ morb_tx <- ring_morb %>%
   left_join(morb_grappe, by = "grappe")
 
 morb_tx_sub <- morb_tx %>%
-  dplyr::select(grappe, arm, ring_range_text, outer_radius, inner_radius, azithro_doses, placebo_doses)
+  dplyr::select(grappe, arm, ring_range_text, outer_radius, inner_radius, azithro_doses, placebo_doses, total_grappes, total_children)
 
 # Permutations ------------------------------------------------------------
 
@@ -81,7 +91,12 @@ perm_rings_df <- bind_rows(perm_rings_list, .id = "perm_id") %>%
 
 # Save data --------------------------------------------------------------
 
-saveRDS(morb_tx_sub, here("data", "clean", "morb_rings.rds"))
+if(run_public){
+  saveRDS(morb_tx_sub, file.path(path_data_clean, "morb_rings.rds"))
+} else {
+  saveRDS(morb_tx_sub, file.path(path_internal, "morb_rings.rds"))
+}
+
 saveRDS(morb_tx, here("data", "output", "morb_rings_full.rds"))
 saveRDS(perm_rings_df, here("data", "output", "perm_rings.rds"))
 

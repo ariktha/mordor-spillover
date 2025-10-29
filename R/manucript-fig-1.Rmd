@@ -54,38 +54,41 @@ library(here)
 
 source(here("R", "00-config.R"))
 
-morb_gps <- readRDS(here("data", "clean", "morb_gps.RDS"))
-main_gps <- readRDS(here("data", "clean", "main_gps.RDS"))
+if(run_public){
+  morb_gps <- readRDS(file.path(path_data_clean, "morb_gps.rds"))
+  main_gps <- readRDS(file.path(path_data_clean, "main_gps.rds"))
+  
+  morb_grappe <- readRDS(file.path(path_data_clean, "morb_grappe.rds")) %>%
+    left_join(morb_gps, by = "grappe") %>%
+    st_as_sf(coords = c("longitude", "latitude"), crs = global_crs, remove = FALSE)
+  main_grappe <- readRDS(file.path(path_data_clean, "main_grappe.rds")) %>%
+    left_join(main_gps, by = "grappe") %>%
+    st_as_sf(coords = c("longitude", "latitude"), crs = global_crs, remove = FALSE)
 
-morb_grappe <- readRDS(here("data", "clean", "morb_grappe.RDS")) %>%
-  left_join(morb_gps, by = "grappe") %>%
-  st_as_sf(coords = c("longitude", "latitude"), crs = global_crs, remove = FALSE)
-main_grappe <- readRDS(here("data", "clean", "main_grappe.RDS")) %>%
-  left_join(main_gps, by = "grappe") %>%
-  st_as_sf(coords = c("longitude", "latitude"), crs = global_crs, remove = FALSE)
-
-# Load Niger map from Humanitarian Data Exchange 
-# Map downloaded from https://data.humdata.org/dataset/cod-ab-ner on 9 April 2024
-
-niger_shp <- st_read(
-  here(
-    "data",
-    "untouched",
-    "niger_shapefiles",
-    "NER_admbnda_adm2_IGNN_20230720.shp"
-  )
-) %>%
-  mutate(mordor_states = ifelse(ADM2_FR %in% c("Falmey", "Boboye", "Loga"), TRUE, FALSE))
-
-africa_boundaries <- rnaturalearth::ne_countries(scale = 10,
-                                                 continent = "Africa",
-                                                 returnclass = "sf")
-niger_boundaries <- rnaturalearth::ne_states(country = "Niger", returnclass = "sf")
-
-# Load international boundaries map from Humanitarian Data Exchange
-# Map downloaded from https://data.humdata.org/dataset/global-international-boundaries-osm on 16 November 2024
-
-intl_boundaries_raw <- st_read(here("data", "untouched", "intl_boundaries", "adm0_polygons.gpkg"))
+  niger_shp <- st_read(file.path(path_data_clean, "niger_shapefiles", "NER_admbnda_adm2_IGNN_20230720.shp")) %>%
+    mutate(mordor_states = ifelse(ADM2_FR %in% c("Falmey", "Boboye", "Loga"), TRUE, FALSE))
+  
+  intl_boundaries_raw <- st_read(file.path(path_data_clean, "intl_boundaries", "adm0_polygons.gpkg"))
+  
+} else {
+  morb_gps <- readRDS(file.path(path_internal, "morb_gps.rds"))
+  main_gps <- readRDS(file.path(path_internal, "main_gps.rds"))
+  
+  morb_grappe <- readRDS(file.path(path_internal, "morb_grappe.rds")) %>%
+    left_join(morb_gps, by = "grappe") %>%
+    st_as_sf(coords = c("longitude", "latitude"), crs = global_crs, remove = FALSE)
+  main_grappe <- readRDS(file.path(path_internal, "main_grappe.rds")) %>%
+    left_join(main_gps, by = "grappe") %>%
+    st_as_sf(coords = c("longitude", "latitude"), crs = global_crs, remove = FALSE)
+  
+  niger_shp <- st_read(here("data", "untouched", "niger_shapefiles", "NER_admbnda_adm2_IGNN_20230720.shp")) %>%
+    mutate(mordor_states = ifelse(ADM2_FR %in% c("Falmey", "Boboye", "Loga"), TRUE, FALSE))
+  
+  # Load international boundaries map from Humanitarian Data Exchange
+  # Map downloaded from https://data.humdata.org/dataset/global-international-boundaries-osm on 16 November 2024
+  
+  intl_boundaries_raw <- st_read(here("data", "untouched", "intl_boundaries", "adm0_polygons.gpkg"))
+}
 
 # Load Tx Intensity Layer
 

@@ -22,7 +22,11 @@ source(here("R", "00-config.R"))
 # Load Niger map from Humanitarian Data Exchange 
 # Map downloaded from https://data.humdata.org/dataset/cod-ab-ner on 9 April 2024
 
-niger_shp <- st_read(here("data", "untouched", "niger_shapefiles", "NER_admbnda_adm2_IGNN_20230720.shp"))
+if(run_public){
+  niger_shp <- st_read(file.path(path_data_clean, "niger_shapefiles", "NER_admbnda_adm2_IGNN_20230720.shp"))
+} else {
+  niger_shp <- st_read(here("data", "untouched", "niger_shapefiles", "NER_admbnda_adm2_IGNN_20230720.shp"))
+}
 
 # st_crs(niger_shp)
 
@@ -74,5 +78,5 @@ pop_all <- left_join(pop_gen, pop_u5, by = c("latitude", "longitude"))
 
 # Save cropped HRSL -------------------------------------------------------
 
-saveRDS(pop_all, here("data", "output", "pop_crop.RDS"))
+saveRDS(pop_all, here("data", "output", "pop_crop.rds"))
 

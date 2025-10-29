@@ -15,18 +15,23 @@ source(here("R", "02ax-layer-fns.R"))
 
 # # Load MORDOR morbidity and main trial data
 # 
-# morb_grappe <- readRDS(here("data", "clean", "morb_grappe.RDS"))
-# main_grappe <- readRDS(here("data", "clean", "main_grappe.RDS"))
+# morb_grappe <- readRDS(here("data", "clean", "morb_grappe.rds"))
+# main_grappe <- readRDS(here("data", "clean", "main_grappe.rds"))
 # 
 # # Load gps data
 # 
-# morb_gps <- readRDS(here("data", "clean", "morb_gps.RDS"))
-# main_gps <- readRDS(here("data", "clean", "main_gps.RDS"))
+# morb_gps <- readRDS(here("data", "clean", "morb_gps.rds"))
+# main_gps <- readRDS(here("data", "clean", "main_gps.rds"))
 
 # Load Niger map from Humanitarian Data Exchange 
 # Map downloaded from https://data.humdata.org/dataset/cod-ab-ner on 9 April 2024
 
-niger_shp <- st_read(here("data", "untouched", "niger_shapefiles", "NER_admbnda_adm2_IGNN_20230720.shp"))
+if(run_public){
+  niger_shp <- st_read(file.path(path_data_clean, "niger_shapefiles", 
+                                               "NER_admbnda_adm2_IGNN_20230720.shp"))
+} else {
+  niger_shp <- st_read(here("data", "untouched", "niger_shapefiles", "NER_admbnda_adm2_IGNN_20230720.shp"))
+}
 
 
 # Prep for distance calculation -------------------------------------------
@@ -92,5 +97,5 @@ grid_tx_int_df <- as.data.frame(grid_tx_int_rast, xy = TRUE)
   
 # Save Results ------------------------------------------------------------
 
-saveRDS(grid_tx_int_rast, here("data", "output", "grid_tx_int_rast.RDS"))
-saveRDS(grid_tx_int_df, here("data", "output", "grid_tx_int_df.RDS"))
+saveRDS(grid_tx_int_rast, here("data", "output", "grid_tx_int_rast.rds"))
+saveRDS(grid_tx_int_df, here("data", "output", "grid_tx_int_df.rds"))
