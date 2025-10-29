@@ -51,7 +51,6 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo = TRUE,
 rm(list = ls())       
 
 library(here)
-library(patchwork)
 ```
 
 ```{r load data}

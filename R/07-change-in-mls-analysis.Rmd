@@ -1,0 +1,487 @@
+---
+title: "MORDOR spillover: Change in MLS gene abundance from baseline to 24 months vs treatment intensity"
+date: "`r Sys.Date()`"
+author: "Ariktha Srivathsan"
+output:
+  html_document:
+    df_print: paged
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo = TRUE)
+
+library(here)
+```
+
+```{r Load data}
+
+source(here("R", "00-config.R"))
+source(here("R", "00-functions.R"))
+
+# Load MORDOR morbidity trial data
+morb_dat_raw <- readRDS(here("data", "clean", "morb_tx_int.RDS"))
+perm_dat_raw <- readRDS(here("data", "output", "perm_tx_int.RDS"))
+
+# Load AMR data
+amr_dat <- readRDS(here("data", "clean", "amr_dat.RDS"))
+
+```
+
+```{r Prep data}
+
+mls_dat <- amr_dat %>%
+  dplyr::filter(ab_class == "MLS")
+
+mls_diff <- mls_dat %>%
+  pivot_wider(names_from = phase, values_from = avg_res) %>%
+  mutate(res_diff = `24 months` - Baseline,
+         res_fold_change = `24 months`/Baseline) %>%
+  dplyr::select(grappe, res_diff, res_fold_change) %>%
+  left_join(morb_dat_raw %>% dplyr::select(grappe, arm) %>% distinct(), by = "grappe")
+
+morb_dat <- morb_dat_raw %>%
+  left_join(mls_diff, by = c("grappe", "arm"))
+
+```
+
+# Parallel coordinates plot
+
+```{r parallel coordinates plot}
+
+pc_plot_dat <- mls_dat %>%
+  left_join(morb_dat_raw %>% dplyr::select(grappe, arm) %>% distinct(), by = "grappe")
+
+diff_panelA <- ggplot(pc_plot_dat,
+       aes(x = phase, y = avg_res, group = grappe, color = arm)) +
+  geom_point(size = 1.4, alpha = 0.6) +
+  geom_line(alpha = 0.6, show.legend = FALSE) +
+  scale_y_continuous(name = "MLS resistance gene abundance\n(normalized reads/million)") +
+  theme_minimal(base_size = 14) +
+  theme(legend.position = "bottom",
+        axis.title.x = element_blank()) +
+  scale_color_manual(
+    name = "Monitoring village treatment",
+    breaks = c("azithro", "placebo"),
+    labels = c("Azithromycin", "Placebo"),
+    values = arms_colors
+  ) +
+  ggtitle("A") +
+  guides(color = guide_legend(override.aes = list(
+    shape = 15,
+    alpha = 0.8,
+    size = 4
+  )))
+
+diff_panelA
+
+```
+
+# Change in MLS from baseline to 24 mo
+
+```{r Correlations and permutation test}
+
+morb_cor <- morb_dat %>%
+  group_by(arm, tx_type, idw_power) %>%
+  summarise(cor = unname(cor.test(tx_int, res_diff, method = "spearman")$estimate), 
+            corf = unname(cor.test(tx_int, res_fold_change, method = "spearman")$estimate),
+            .groups = "drop")
+
+perm_dat <- perm_dat_raw %>%
+  left_join(mls_diff, by = "grappe") %>%
+  group_by(perm_id, arm, tx_type, idw_power) %>%
+  summarise(cor = unname(cor.test(tx_int, res_diff, method = "spearman")$estimate), 
+            corf = unname(cor.test(tx_int, res_fold_change, method = "spearman")$estimate),
+            .groups = "drop")
+
+morb_cor_lookup <- morb_cor %>%
+  dplyr::select(arm, tx_type, idw_power, cor, corf) %>%
+  {setNames(split(., seq(nrow(.))), 
+            paste(.$arm, .$idw_power, .$tx_type, sep = "_"))}
+
+morb_cor_dists <- perm_dat %>%
+  mutate(lookup_key = paste(arm, idw_power, tx_type, sep = "_")) %>%
+  group_split(lookup_key, .keep = TRUE) 
+
+morb_cor_pvals <- mclapply(morb_cor_dists, function(group_data) {
+  tryCatch({
+    key <- unique(group_data$lookup_key)
+    obs_data <- morb_cor_lookup[[key]]
+    obs_rho <- obs_data$cor
+    obs_rhof <- obs_data$corf
+
+    rho_pval <- tryCatch({
+      get_two_sided_pval(obs = obs_rho, empirical_dist = group_data$cor)
+    }, error = function(e) NA_real_)
+    
+    rho_pvalf <- tryCatch({
+      get_two_sided_pval(obs = obs_rhof, empirical_dist = group_data$corf)
+    }, error = function(e) NA_real_)
+    
+    tibble(
+      arm = obs_data$arm[1],
+      idw_power = obs_data$idw_power[1], 
+      tx_type = obs_data$tx_type[1],
+      rho = obs_rho,
+      perm_p = rho_pval,
+      rhof = obs_rhof,
+      perm_pf = rho_pvalf
+    )
+  }, error = function(e) {
+    warning(paste("Error processing group:", e$message))
+    # Return a row with NAs even when there's an error
+    tibble(
+      arm = group_data$arm[1],
+      idw_power = group_data$idw_power[1], 
+      tx_type = group_data$tx_type[1],
+      rho = obs_rho,
+      perm_p = NA_real_,
+      rhof = obs_rhof,
+      perm_pf = NA_real_
+    )
+  })
+}, mc.cores = n_cores) %>%
+  bind_rows()
+
+morb_cor <- morb_cor %>%
+  rename(rho = cor,
+         rhof = corf) %>%
+  left_join(morb_cor_pvals, 
+            by = c("arm", "idw_power", "tx_type", "rho", "rhof"))
+
+```
+
+## Absolute change
+
+### Descriptives
+
+```{r abs change descriptives}
+skimr::skim(morb_dat %>% dplyr::select(res_diff))
+
+ggplot(morb_dat) +
+  geom_boxplot(aes(y = res_diff, x = arm, group = arm, color = arm)) +
+  geom_point(aes(y = res_diff, x = arm, group = arm, color = arm)) +
+  scale_color_manual(
+    name = "Monitoring village treatment",
+    breaks = c("azithro", "placebo"),
+    labels = c("Azithromycin", "Placebo"),
+    values = arms_colors
+  ) +
+  scale_y_continuous(name = "Absolute change in MLS resistance") +
+  theme_minimal(base_size = 14) +
+  theme(legend.position = "bottom")
+
+```
+
+### Corr: abs MLS change and tx int
+
+```{r correlations table}
+
+morb_cor %>%
+  mutate(exp = ifelse(tx_type == "azithro", "Primary exposure", "NCE")) %>%
+  dplyr::select(idw_power, exp, arm, rho, perm_p) %>%
+  arrange(idw_power, exp, arm) %>%
+  kable(format = "html", digits = 3, 
+        col.names = c("IDW power", "Expt", "Arm", "Spearman's rho", "Permutation p-value"),
+        caption = "Spearman's correlations between absolute change in MLS resistance and treatment intensity")
+
+```
+
+```{r Scatterplot, fig.height=8, fig.width=6}
+
+cor_text <- morb_cor %>%
+  mutate(plot_label = paste0(
+    'rho == ', sprintf("%.2f", rho), 
+    ' * "," ~ italic(p) == ', sprintf("%.2f", perm_p) 
+  ),
+  y = ifelse(arm == "azithro", 100, 85),
+  plot_labelf = paste0(
+    'rho == ', sprintf("%.2f", rhof), 
+    ' * "," ~ italic(p) == ', sprintf("%.2f", perm_pf) 
+  ),
+  yf = ifelse(arm == "azithro", 20, 12),
+  y_perm = ifelse(arm == "azithro", 3.5, 3)
+  )
+
+panelA <- ggplot() +
+  geom_point(data = subset(morb_dat, idw_power == 1 & tx_type == "azithro"), 
+             aes(x = tx_int, y = res_diff, color = arm),
+             size = 3.5,
+             alpha = 0.6) +
+  geom_text(data = subset(cor_text, idw_power == 1 & tx_type == "azithro"), 
+            aes(y = y, color = arm, label = plot_label), 
+            x = 1,
+            size = 5,
+            hjust = 1,
+            parse = TRUE,
+            show.legend = FALSE) +
+  geom_hline(yintercept = 0, color = "black", linewidth = 0.3, alpha = 0.5, linetype = "dashed") +
+  theme_minimal(base_size = 14) +
+  theme(legend.position = "bottom") +
+  scale_y_continuous(name = "Change in MLS resistance gene\nabundance (normalized reads/million)",
+                     limits = c(-25, 100)) +
+  scale_x_continuous(limits = c(0, 1),
+                     name = "Geographic treatment intensity of azithromycin") +
+  scale_color_manual(
+    name = "Monitoring village treatment",
+    breaks = c("azithro", "placebo"),
+    labels = c("Azithromycin", "Placebo"),
+    values = arms_colors
+  ) +
+  ggtitle("B") +
+  guides(color = guide_legend(override.aes = list(
+    shape = 15,
+    alpha = 0.8,
+    size = 4
+  )))
+
+panelB <- ggplot() +
+  geom_point(data = subset(morb_dat, idw_power == 1 & tx_type == "placebo"), 
+             aes(x = tx_int, y = res_diff, color = arm),
+             size = 3.5,
+             alpha = 0.6) +
+  geom_text(data = subset(cor_text, idw_power == 1 & tx_type == "placebo"), 
+            aes(y = y, color = arm, label = plot_label), 
+            x = 1,
+            size = 5,
+            hjust = 1,
+            parse = TRUE,
+            show.legend = FALSE) +
+  geom_hline(yintercept = 0, color = "black", linewidth = 0.3, alpha = 0.5, linetype = "dashed") +
+  theme_minimal(base_size = 14) +
+  theme(legend.position = "bottom") +
+  scale_y_continuous(name = "Change in MLS resistance gene\nabundance (normalized reads/million)",
+                     limits = c(-25, 100)) +
+  scale_x_continuous(limits = c(0, 1),
+                     name = "Geographic treatment intensity of placebo") +
+  scale_color_manual(
+    name = "Monitoring village treatment",
+    breaks = c("azithro", "placebo"),
+    labels = c("Azithromycin", "Placebo"),
+    values = arms_colors
+  ) +
+  ggtitle("C") +
+  guides(color = guide_legend(override.aes = list(
+    shape = 15,
+    alpha = 0.8,
+    size = 4
+  )))
+
+mls_change_plot <- diff_panelA / panelA / panelB +
+  plot_layout(guides = "collect", axes = "collect_y") & theme(legend.position = "bottom")
+
+mls_change_plot
+
+ggsave(mls_change_plot, filename = here("figs", "manuscript", "supp-figs", "supp_fig9.png"), 
+       width = 7, height = 9, dpi = 600, bg = "white")
+
+```
+
+### Permutation distributions
+
+```{r abs change perm dists}
+
+perm_combined <- bind_rows(morb_cor_dists)
+
+ggplot(subset(perm_combined, idw_power ==1), aes(x = cor, color = arm, fill = arm)) +
+  geom_vline(xintercept = 0, color = "black", linewidth = 0.3) +
+  geom_density(alpha = 0.3) +
+  geom_vline(data = subset(morb_cor, idw_power ==1), 
+             aes(xintercept = rho, color = arm),
+             linetype = "dotted",
+             linewidth = 0.8) +
+  geom_label(data = subset(cor_text, idw_power ==1), 
+            aes(color = arm, label = plot_label, y = y_perm), 
+            x = 1,
+            hjust = 1,
+            vjust = 1,
+            parse = TRUE,
+            show.legend = FALSE,
+            fill = "white") +
+  facet_wrap(~tx_type,
+             labeller = labeller(tx_type = c(`azithro` = "Primary exposure", `placebo` = "NCE"))) +
+  scale_x_continuous(name = "Spearman Correlation", limits = c(-1, 1)) +
+  scale_y_continuous(name = "Density") +
+  scale_color_manual(
+    name = "Monitoring village treatment",
+    breaks = c("azithro", "placebo"),
+    labels = c("Azithromycin", "Placebo"),
+    values = arms_colors
+  ) +
+  scale_fill_manual(
+    name = "Monitoring village treatment",
+    breaks = c("azithro", "placebo"),
+    labels = c("Azithromycin", "Placebo"),
+    values = arms_colors
+  ) +
+  labs(
+    title = "Permutation Null Distributions with Observed Correlations",
+    subtitle = "Correlation between absolute change in MLS and Tx int"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "bottom",
+    panel.spacing = unit(1, "lines")
+  )
+
+```
+
+## Fold change
+
+### Descriptives
+
+```{r Fold change descriptives}
+
+skimr::skim(morb_dat %>% dplyr::select(res_fold_change))
+
+ggplot(morb_dat) +
+  geom_boxplot(aes(y = res_fold_change, x = arm, group = arm, color = arm)) +
+  geom_point(aes(y = res_fold_change, x = arm, group = arm, color = arm)) +
+  scale_color_manual(
+    name = "Monitoring village treatment",
+    breaks = c("azithro", "placebo"),
+    labels = c("Azithromycin", "Placebo"),
+    values = arms_colors
+  ) +
+  scale_y_continuous(name = "Fold change in MLS resistance") +
+  theme_minimal(base_size = 14) +
+  theme(legend.position = "bottom")
+
+```
+
+
+### Corr: fold MLS change and tx int
+
+```{r fold change correlations table}
+
+morb_cor %>%
+  mutate(exp = ifelse(tx_type == "azithro", "Primary exposure", "NCE")) %>%
+  dplyr::select(idw_power, exp, arm, rhof, perm_pf) %>%
+  arrange(idw_power, exp, arm) %>%
+  kable(format = "html", digits = 3, 
+        col.names = c("IDW power", "Expt", "Arm", "Spearman's rho", "Permutation p-value"),
+        caption = "Spearman's correlations between fold change in MLS resistance and treatment intensity")
+
+```
+
+```{r fold change scatterplot, fig.height=8, fig.width=6}
+
+panelAf <- ggplot() +
+  geom_point(data = subset(morb_dat, idw_power == 1 & tx_type == "azithro"), 
+             aes(x = tx_int, y = res_fold_change, color = arm),
+             size = 3.5,
+             alpha = 0.6) +
+  geom_text(data = subset(cor_text, idw_power == 1 & tx_type == "azithro"), 
+            aes(y = yf, color = arm, label = plot_labelf), 
+            x = 1,
+            size = 5,
+            hjust = 1,
+            parse = TRUE,
+            show.legend = FALSE) +
+  geom_hline(yintercept = 1, color = "black", linewidth = 0.3, alpha = 0.5, linetype = "dashed") +
+  theme_minimal(base_size = 14) +
+  theme(legend.position = "bottom") +
+  scale_y_continuous(name = "Fold change in MLS resistance\ngene abundance (normalized reads/million)",
+                     # limits = c(0, 30),
+                     transform = "log2",
+                     breaks = c(0.125, 0.25, 0.5, 1, 2, 4, 8, 16)) +
+  scale_x_continuous(limits = c(0, 1),
+                     name = "Geographic treatment intensity of azithromycin") +
+  scale_color_manual(
+    name = "Monitoring village treatment",
+    breaks = c("azithro", "placebo"),
+    labels = c("Azithromycin", "Placebo"),
+    values = arms_colors
+  ) +
+  ggtitle("A")
+
+panelBf <- ggplot() +
+  geom_point(data = subset(morb_dat, idw_power == 1 & tx_type == "placebo"), 
+             aes(x = tx_int, y = res_fold_change, color = arm),
+             size = 3.5,
+             alpha = 0.6) +
+  geom_text(data = subset(cor_text, idw_power == 1 & tx_type == "placebo"), 
+            aes(y = yf, color = arm, label = plot_labelf), 
+            x = 1,
+            size = 5,
+            hjust = 1,
+            parse = TRUE,
+            show.legend = FALSE) +
+  geom_hline(yintercept = 1, color = "black", linewidth = 0.3, alpha = 0.5, linetype = "dashed") +
+  theme_minimal(base_size = 14) +
+  theme(legend.position = "bottom") +
+  scale_y_continuous(name = "Fold change in MLS resistance\ngene abundance (normalized reads/million)",
+                     # limits = c(0, 30),
+                     transform = "log2",
+                     breaks = c(0.125, 0.25, 0.5, 1, 2, 4, 8, 16)) +
+  scale_x_continuous(limits = c(0, 1),
+                     name = "Geographic treatment intensity of placebo") +
+  scale_color_manual(
+    name = "Monitoring village treatment",
+    breaks = c("azithro", "placebo"),
+    labels = c("Azithromycin", "Placebo"),
+    values = arms_colors
+  ) +
+  ggtitle("B")
+
+mls_fold_change_plot <- panelAf / panelBf +
+  plot_layout(guides = "collect", axes = "collect_y") & theme(legend.position = "bottom")
+
+mls_fold_change_plot
+
+ggsave(mls_change_plot, filename = here("figs", "reviewer-comments", "mls_abs_change.png"), 
+       width = 6, height = 8, dpi = 600, bg = "white")
+
+```
+
+### Permutation distributions
+
+```{r fold change perm dists}
+
+ggplot(subset(perm_combined, idw_power ==1), aes(x = corf, color = arm, fill = arm)) +
+  geom_vline(xintercept = 0, color = "black", linewidth = 0.3) +
+  geom_density(alpha = 0.3) +
+  geom_vline(data = subset(morb_cor, idw_power ==1), 
+             aes(xintercept = rhof, color = arm),
+             linetype = "dotted",
+             linewidth = 0.8) +
+  geom_label(data = subset(cor_text, idw_power ==1), 
+            aes(color = arm, label = plot_labelf, y = y_perm), 
+            x = 1,
+            hjust = 1,
+            vjust = 1,
+            parse = TRUE,
+            show.legend = FALSE,
+            fill = "white") +
+  facet_wrap(~tx_type,
+             labeller = labeller(tx_type = c(`azithro` = "Primary exposure", `placebo` = "NCE"))) +
+  scale_x_continuous(name = "Spearman Correlation", limits = c(-1, 1)) +
+  scale_y_continuous(name = "Density") +
+  scale_color_manual(
+    name = "Monitoring village treatment",
+    breaks = c("azithro", "placebo"),
+    labels = c("Azithromycin", "Placebo"),
+    values = arms_colors
+  ) +
+  scale_fill_manual(
+    name = "Monitoring village treatment",
+    breaks = c("azithro", "placebo"),
+    labels = c("Azithromycin", "Placebo"),
+    values = arms_colors
+  ) +
+  labs(
+    title = "Permutation Null Distributions with Observed Correlations",
+    subtitle = "Correlation between fold change in MLS and Tx int"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "bottom",
+    panel.spacing = unit(1, "lines")
+  )
+
+```
+

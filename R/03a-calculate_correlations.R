@@ -31,13 +31,11 @@ perm_rings_raw <- readRDS(here("data", "output", "perm_rings.RDS"))
 # Load AMR data
 amr_dat <- readRDS(here("data", "clean", "amr_dat.RDS"))
 
-
 # Prepare data ------------------------------------------------------------
 
 # Treatment intensity data
 
 morb_tx_int <- morb_tx_int_raw %>% 
-  dplyr::select(grappe, arm, idw_power, tx_type, tx_int) %>%
   left_join(amr_dat, by = "grappe", relationship = "many-to-many")
 
 perm_tx_int <- perm_tx_int_raw %>% 
@@ -47,7 +45,6 @@ perm_tx_int <- perm_tx_int_raw %>%
 # Ring data
 
 morb_ring <- morb_rings_raw %>% 
-  st_drop_geometry() %>%
   dplyr::select(grappe, arm, ring_range_text, azithro_doses, placebo_doses) %>%
   pivot_longer(cols = c(azithro_doses, placebo_doses), 
                names_to = "tx_type",
@@ -68,6 +65,8 @@ perm_ring <- perm_rings_raw %>%
 # Treatment intensity and AMR ---------------------------------------------
 
 # Estimate the observed correlations
+# cor throws a warning wherever the sd of either variable is 0, so we first check what rows have zero sd
+# All 0 sd rows correspond to Fofsomycin
 
 morb_tx_int %>%
   group_by(arm, phase, tx_type, idw_power, ab_class) %>%

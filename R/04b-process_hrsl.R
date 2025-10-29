@@ -13,8 +13,6 @@
 rm(list = ls())       
 
 library(here)
-library(units)
-library(tictoc)
 
 source(here("R", "00-config.R"))
 source(here("R", "00-functions.R"))
@@ -24,7 +22,8 @@ source(here("R", "00-functions.R"))
 
 # Load grappe data
 morb_gps <- readRDS(here("data", "clean", "morb_gps.RDS"))
-morb_grappe_raw <- readRDS(here("data", "clean", "morb_grappe.RDS"))
+morb_grappe_raw <- readRDS(here("data", "clean", "morb_tx_int.RDS")) %>%
+  dplyr::select(grappe, arm)
 
 # Load Meta high-res population density data for Niger from Humanitarian Data Exchange 
 # Data downloaded from https://data.humdata.org/dataset/highresolutionpopulationdensitymaps-ner# on 13 November 2024

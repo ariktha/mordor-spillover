@@ -82,6 +82,6 @@ perm_rings_df <- bind_rows(perm_rings_list, .id = "perm_id") %>%
 # Save data --------------------------------------------------------------
 
 saveRDS(morb_tx_sub, here("data", "clean", "morb_rings.rds"))
-saveRDS(moirb_tx, here("data", "output", "morb_rings_full.rds"))
+saveRDS(morb_tx, here("data", "output", "morb_rings_full.rds"))
 saveRDS(perm_rings_df, here("data", "output", "perm_rings.rds"))
 

@@ -11,11 +11,7 @@
 #------------------------------------
 
 rm(list = ls())       
-
 library(here)
-library(units)
-library(patchwork)
-library(ggpubr)
 
 source(here("R", "00-config.R"))
 
@@ -23,7 +19,8 @@ source(here("R", "00-config.R"))
 
 # Load MORDOR morbidity and main trial data
 
-morb_grappe <- readRDS(here("data", "clean", "morb_grappe.RDS"))
+morb_grappe <- readRDS(here("data", "clean", "morb_tx_int.RDS")) %>%
+  dplyr::select(grappe, arm)
 
 morb_gps <- readRDS(here("data", "clean", "morb_gps.RDS")) %>%
   st_as_sf(coords = c("longitude", "latitude"), crs = global_crs)

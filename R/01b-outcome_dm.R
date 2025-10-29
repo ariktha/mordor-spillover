@@ -73,17 +73,10 @@ amr_data_summ <- amr_dat_long %>%
 amr_dat_final <- amr_data_summ %>% 
   dplyr::select(phase, grappe, ab_class, avg_res)
 
-mls_dat <- amr_dat_final %>% 
-  dplyr::filter(ab_class == "MLS") %>%
-  dplyr::select(-ab_class)
-
-
 # Save outcome dataset ----------------------------------------------------
 
 saveRDS(amr_data_summ, here("data", "output", "amr_dat_full.rds"))
 saveRDS(amr_dat_final, here("data", "clean", "amr_dat.rds"))
-saveRDS(mls_dat, here("data", "output", "mls_dat.rds"))
-
 
 # Plots to check data -----------------------------------------------------
 

@@ -50,10 +50,6 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo = TRUE)
 rm(list = ls())       
 
 library(here)
-library(broom)
-library(patchwork)
-library(knitr)
-library(kableExtra)
 ```
 
 ```{r Load data}
@@ -125,9 +121,10 @@ morb_tx <- morb_tx_raw %>%
 morb_desc <- morb_rings_raw %>% 
   st_drop_geometry() %>%
   dplyr::filter(outer_radius <= 30) %>%
-  dplyr::select(grappe, arm, n_children, ring_range_text, ends_with("_doses")) %>%
+  dplyr::select(grappe, arm, ring_range_text, ends_with("_doses")) %>%
   mutate(
     ring_range_text = factor(ring_range_text, levels = c("0 - 10 km", "10 - 20 km", "20 - 30 km")),
+    total_doses = azithro_doses + placebo_doses,
     azithro_doses = azithro_doses / 1000,
     placebo_doses = placebo_doses / 1000,
     total_doses = total_doses / 1000,
@@ -241,20 +238,20 @@ total_dose_tib <- morb_desc %>%
 morb_desc <- morb_desc %>%
   left_join(total_dose_tib, by = "grappe")
 
-ggplot(morb_desc %>% dplyr::select(arm, n_children, inner_total_doses) %>% distinct(), 
-       aes(x = n_children/1000, y = inner_total_doses, color = arm)) +
-  geom_point() +
-  geom_abline(slope = 4, intercept = 0, linetype = "dashed", color = "darkgrey") +
-  geom_smooth(method = "lm", se = FALSE) +
-  ggpubr::stat_cor(aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), 
-                   label.x.npc = "left", label.y.npc = "top") +
-  scale_color_manual(values = arms_colors, breaks = c("azithro", "placebo")) +
-  # scale_x_continuous(limits = c(0, 30)) +
-  scale_y_continuous(limits = c(0, 30)) +
-  labs(y = "Total doses in the ring (in thousands)",
-       x = "Number of children in the monitoring village (in thousands)") +
-  theme_minimal(base_size = 14) +
-  theme(legend.position = "bottom")
+# ggplot(morb_desc %>% dplyr::select(arm, n_children, inner_total_doses) %>% distinct(), 
+#        aes(x = n_children/1000, y = inner_total_doses, color = arm)) +
+#   geom_point() +
+#   geom_abline(slope = 4, intercept = 0, linetype = "dashed", color = "darkgrey") +
+#   geom_smooth(method = "lm", se = FALSE) +
+#   ggpubr::stat_cor(aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), 
+#                    label.x.npc = "left", label.y.npc = "top") +
+#   scale_color_manual(values = arms_colors, breaks = c("azithro", "placebo")) +
+#   # scale_x_continuous(limits = c(0, 30)) +
+#   scale_y_continuous(limits = c(0, 30)) +
+#   labs(y = "Total doses in the ring (in thousands)",
+#        x = "Number of children in the monitoring village (in thousands)") +
+#   theme_minimal(base_size = 14) +
+#   theme(legend.position = "bottom")
 
 ```
 
@@ -489,8 +486,8 @@ ring_results_kable <- ring_results_table %>%
          exp_est, exp_ci_ll, exp_ci_ul, p.value) %>%
   kable()
 
-save_kable(ring_results_kable, 
-            here("figs", "final", "log-linear-model-results.png"), zoom = 2)
+# save_kable(ring_results_kable, 
+#             here("figs", "final", "log-linear-model-results.png"), zoom = 2)
 
 ggplot(subset(ring_results_table, term == "az_0_10"), aes(x = exp_est, y = arm, color = arm)) +
   geom_vline(xintercept = 1, linetype = "dashed", color = "black") +
@@ -519,237 +516,4 @@ ring_results_table %>%
 
 ```
 
-# No chunks evaluated here on
 
-## All old models
-
-## In rings: Without total doses
-### Model fitting
-
-Using log-linear models to assess the relationship between azithromycin doses within 10 km, 10-20 km, and 20-30 km of each morbidity trial grappe and the average resistance of MLS antibiotics at 24 months. The models are specified as follows:
-
--   `Log(AMR) ~ az 0-10 + az 10-20 + az 20-30`: where `az 0-10`, `az 10-20`, and `az 20-30` are the azithromycin doses within 0-10 km, 10-20 km, and 20-30 km of each morbidity trial grappe. Doses are in thousands.
-
--   `Log(AMR) ~ az 0-10 + az 10-20 + az 20-30 + scaled u5 pop`: where `scaled u5 pop` is the under 5 population estimate (in 1000s) within a 10 km radius of each morbidity trial grappe.
-
--   `Log(AMR) ~ az 0-10 + az 10-20 + az 20-30 + dist to nearest CSI`: where `dist to nearest CSI` is the distance to the nearest CSI in kilometers.
-
-***I am representing the sum of all ring terms (`az 0-10 + az 10-20 + az 20-30`) as az_rings.***
-
-```{r ring log-linear models, eval=FALSE}
-
-ring_model_results <- morb_rings %>%
-  group_by(arm, phase) %>%
-  nest() %>%
-  mutate(
-    model_log_az = map(data, ~ lm(log(avg_res) ~ az_0_10 + az_10_20 + az_20_30, data = .x)),
-    model_log_az_pop = map(data, ~ lm(log(avg_res) ~ az_0_10 + az_10_20 + az_20_30 + u5_pop_scale, data = .x)),
-    model_log_az_csi = map(data, ~ lm(log(avg_res) ~ az_0_10 + az_10_20 + az_20_30 + dist_csi, data = .x)),
-    
-    tidy_log_az = map(model_log_az, ~ tidy(.x, conf.int = TRUE) %>% 
-                               mutate(exp_est = exp(estimate),
-                                      exp_ci_ll = exp(conf.low),
-                                      exp_ci_ul = exp(conf.high))),
-    tidy_log_az_pop = map(model_log_az_pop, ~ tidy(.x, conf.int = TRUE) %>%
-                               mutate(exp_est = exp(estimate),
-                                      exp_ci_ll = exp(conf.low),
-                                      exp_ci_ul = exp(conf.high))),
-    tidy_log_az_csi = map(model_log_az_csi, ~ tidy(.x, conf.int = TRUE) %>% 
-                        mutate(exp_est = exp(estimate),
-                               exp_ci_ll = exp(conf.low),
-                               exp_ci_ul = exp(conf.high))),
-    
-    glance_log_az = map(model_log_az, glance),
-    glance_log_az_pop = map(model_log_az_pop, glance),
-    glance_log_az_csi = map(model_log_az_csi, glance)
-  )
-
-ring_results_table <- ring_model_results %>%
-  dplyr::select(arm, phase, starts_with("tidy_"), starts_with("glance_")) %>%
-  pivot_longer(cols = starts_with("tidy_"), names_to = "model_type", values_to = "tidy_data") %>%
-  unnest(tidy_data) %>%
-  dplyr::filter(term %in% c("az_0_10", "az_10_20", "az_20_30", "u5_pop_scale", "dist_csi")) %>%
-  mutate(
-    model_label = factor(case_when(
-      model_type == "tidy_log_az" ~ "Log(AMR) ~ az rings",
-      model_type == "tidy_log_az_pop" ~ "Log(AMR) ~ az rings + scaled u5 pop",
-      model_type == "tidy_log_az_csi" ~ "Log(AMR) ~ az rings + dist to CSI"
-    ), ordered = TRUE, levels = c(
-      "Log(AMR) ~ az rings",
-      "Log(AMR) ~ az rings + scaled u5 pop",
-      "Log(AMR) ~ az rings + dist to CSI"
-    ))
-  ) %>%
-  left_join(
-    ring_model_results %>%
-      dplyr::select(arm, phase, starts_with("glance_")) %>%
-      pivot_longer(cols = starts_with("glance_"), names_to = "model_type", values_to = "glance_data") %>%
-      mutate(model_type = str_replace(model_type, "glance_", "tidy_")) %>%
-      unnest(glance_data) %>%
-      dplyr::select(arm, phase, model_type, r.squared),
-    by = c("arm", "phase", "model_type")
-  ) %>%
-  dplyr::select(arm, phase, model_label, term, estimate, conf.low, conf.high,
-         exp_est, exp_ci_ll, exp_ci_ul, p.value, r.squared) %>%
-  mutate(across(where(is.numeric), \(x) round(x, 2)))
-```
-
-### Full Results
-
-```{r ring model results, eval=FALSE}
-ring_results_table %>%
-  dplyr::select(arm, phase, model_label, term, estimate,
-         exp_est, exp_ci_ll, exp_ci_ul, p.value, r.squared)
-  
-```
-
-### Only azithromycin doses within 10 km
-
-Looking only at the coefficients of doses within 10 km, from all models, at the 24 month timepoint, for each arm:
-
-```{r az ring doses results, eval=FALSE}
-
-ring_results_table %>%
-  dplyr::filter(term == "az_0_10") %>%
-  dplyr::filter(phase == "24 months") %>%
-  dplyr::select(arm, phase, model_label, term, estimate,
-         exp_est, exp_ci_ll, exp_ci_ul, p.value, r.squared)
-
-ggplot(subset(ring_results_table, term == "az_0_10"), aes(x = exp_est, y = arm, color = arm)) +
-  geom_vline(xintercept = 1, linetype = "dashed", color = "black") +
-  geom_point() +
-  geom_errorbarh(aes(xmin = exp_ci_ll, xmax = exp_ci_ul), height = 0.2) +
-  facet_wrap(~ model_label + phase, ncol = 2) +
-  scale_color_manual(values = arms_colors) +
-  labs(x = "Exponentiated coefficient of az doses (in 5 thousands) within 10 km", y = "Arm") +
-  guides(y = "none") +
-  theme_minimal(base_size = 14) +
-  theme(legend.position = "bottom")
-
-ggsave(here("figs", "az-ring-model-results.png"),
-       width = 8, height = 6, dpi = 600, bg = "white")
-
-```
-
-## Treatment intensity
-
-### Models
-
-Using log-linear models to assess the relationship between azithromycin treatment and the average resistance of MLS antibiotics at 24 months. The models are specified as follows:
-
--   `Log(AMR) ~ az_int`: where `az_int` is the geographic treatment intensity of azithromycin doses.
-
--   `Log(AMR) ~ az_int + nce`: where `nce` is the geographic treatment intensity of placebo doses.
-
--   `Log(AMR) ~ az_int + scaled u5 pop`: where `scaled u5 pop` is the under 5 population estimate (in 1000s) within a 10 km radius of each morbidity trial grappe.
-
--   `Log(AMR) ~ az_int + dist to nearest CSI`: where `dist to nearest CSI` is the distance to the nearest CSI in kilometers.
-
-```{r Log-linear models of tx int, eval=FALSE}
-
-model_results <- morb_tx %>%
-  group_by(arm, phase) %>%
-  nest() %>%
-  mutate(
-    model_log_az = map(data, ~ lm(log(avg_res) ~ azithro_int, data = .x)),
-    model_log_az_nce = map(data, ~ lm(log(avg_res) ~ azithro_int + placebo_int, data = .x)),
-    model_log_az_pop = map(data, ~ lm(log(avg_res) ~ azithro_int + u5_pop_scale, data = .x)),
-    model_log_az_csi = map(data, ~ lm(log(avg_res) ~ azithro_int + dist_csi, data = .x)),
-    
-    # Tidy output
-    tidy_log_az = map(model_log_az, ~ tidy(.x, conf.int = TRUE) %>% 
-                        mutate(exp_est = exp(estimate),
-                               exp_ci_ll = exp(conf.low),
-                               exp_ci_ul = exp(conf.high))),
-    
-    tidy_log_az_nce = map(model_log_az_nce, ~ tidy(.x, conf.int = TRUE) %>% 
-                            mutate(exp_est = exp(estimate),
-                                   exp_ci_ll = exp(conf.low),
-                                   exp_ci_ul = exp(conf.high))),
-    
-    tidy_log_az_pop = map(model_log_az_pop, ~ tidy(.x, conf.int = TRUE) %>% 
-                            mutate(exp_est = exp(estimate),
-                                   exp_ci_ll = exp(conf.low),
-                                   exp_ci_ul = exp(conf.high))),
-    
-    tidy_log_az_csi = map(model_log_az_csi, ~ tidy(.x, conf.int = TRUE) %>%
-                            mutate(exp_est = exp(estimate),
-                                   exp_ci_ll = exp(conf.low),
-                                   exp_ci_ul = exp(conf.high))),
-    
-    # Model fit
-    glance_log_az = map(model_log_az, glance),
-    glance_log_az_nce = map(model_log_az_nce, glance),
-    glance_log_az_pop = map(model_log_az_pop, glance),
-    glance_log_az_csi = map(model_log_az_csi, glance)
-  )
-
-results_table <- model_results %>%
-  dplyr::select(arm, phase, starts_with("tidy_"), starts_with("glance_")) %>%
-  pivot_longer(cols = starts_with("tidy_"), names_to = "model_type", values_to = "tidy_data") %>%
-  unnest(tidy_data) %>%
-  dplyr::filter(term %in% c("azithro_int", "placebo_int", "u5_pop_scale", "dist_csi")) %>%
-  mutate(
-    model_label = factor(case_when(
-      model_type == "tidy_log_az" ~ "Log(AMR) ~ az_int",
-      model_type == "tidy_log_az_nce" ~ "Log(AMR) ~ az_int + nce",
-      model_type == "tidy_log_az_pop" ~ "Log(AMR) ~ az_int + scaled u5 pop",
-      model_type == "tidy_log_az_csi" ~ "Log(AMR) ~ az_int + dist to nearest CSI"
-    ), ordered = TRUE, levels = c(
-      "Log(AMR) ~ az_int",
-      "Log(AMR) ~ az_int + nce",
-      "Log(AMR) ~ az_int + scaled u5 pop",
-      "Log(AMR) ~ az_int + dist to nearest CSI"
-    ))
-  ) %>%
-  left_join(
-    model_results %>%
-      dplyr::select(arm, phase, starts_with("glance_")) %>%
-      pivot_longer(cols = starts_with("glance_"), names_to = "model_type", values_to = "glance_data") %>%
-      mutate(model_type = str_replace(model_type, "glance_", "tidy_")) %>%
-      unnest(glance_data) %>%
-      dplyr::select(arm, phase, model_type, r.squared),
-    by = c("arm", "phase", "model_type")
-  ) %>%
-  dplyr::select(arm, phase, model_label, term, estimate, conf.low, conf.high,
-         exp_est, exp_ci_ll, exp_ci_ul, p.value, r.squared) %>%
-  mutate(across(where(is.numeric), \(x) round(x, 2)))
-```
-
-### Full Results
-
-```{r model results, eval=FALSE}
-
-results_table %>%
-  dplyr::select(arm, phase, model_label, term, estimate,
-         exp_est, exp_ci_ll, exp_ci_ul, p.value, r.squared)
-
-```
-
-### Only azithromycin treatment intensity terms
-
-Looking only at the coefficients of the azithromycin treatment intensity, from all models, at the 24 month timepoint, for each arm:
-
-```{r az tx int results, eval=FALSE}
-
-results_table %>%
-  dplyr::filter(term == "azithro_int") %>%
-  dplyr::filter(phase == "24 months") %>%
-  dplyr::select(arm, phase, model_label, estimate,
-         exp_est, exp_ci_ll, exp_ci_ul, p.value, r.squared)
-
-ggplot(subset(results_table, term == "azithro_int"), aes(x = exp_est, y = arm, color = arm)) +
-  geom_vline(xintercept = 1, linetype = "dashed", color = "black") +
-  geom_point() +
-  geom_errorbarh(aes(xmin = exp_ci_ll, xmax = exp_ci_ul), height = 0.2) +
-  facet_wrap(~ model_label + phase, ncol = 2) +
-  scale_color_manual(values = arms_colors) +
-  labs(x = "Exponentiated coefficient of az tx int", y = "Arm") +
-  guides(y = "none") +
-  theme_minimal(base_size = 14) +
-  theme(legend.position = "bottom")
-
-ggsave(here("figs", "tx-int-model-results.png"),
-       width = 8, height = 6, dpi = 600, bg = "white")
-
-```

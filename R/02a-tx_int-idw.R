@@ -78,7 +78,7 @@ morb_tx <- morb_tx_int %>%
 # Generate Treatment Intensity Layer --------------------------------------
 
 if (recalc_idw_layer) {
-  source(here("scripts", "24-months", "02ax-tx_int-idw-layer.R"))
+  source(here("R", "02ax-tx_int-idw-layer.R"))
 }
 
 # Permutation Tests -------------------------------------------------------

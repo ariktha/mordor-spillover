@@ -11,12 +11,11 @@
 
 rm(list = ls())
 
-library(tidyverse)
+library(here)
+source(here("R", "00-pkg-config.R"))
 
-library(sf)
 sf_use_s2(FALSE)
 
-library(parallel)
 
 data_folder_path <- "/Users/ariktha/Library/CloudStorage/Box-Box/MORDOR Data/data"
 n_cores <- max(1, parallel::detectCores() - 2)
@@ -37,7 +36,7 @@ idw_power <- 1
 trunc_val <- c(1, 1)
 
 ## IDW layer re-estimation
-recalc_idw_layer <- FALSE
+recalc_idw_layer <- TRUE
 pred_grid_dim <- 300
 
 ## Radii for doses within distance
