@@ -31,7 +31,7 @@ Following: https://www.nature.com/documents/nr-software-policy.pdf
 
 `Running under: macOS Sequoia 15.6.1`
 
-All analyses were run using R version 4.5.1 (2025-06-13) -- "Great Square Root" on Mac OSX Sequoia (15.6.1) using the RStudio IDE (https://www.rstudio.com).
+All analyses were run using R version 4.5.1 (2025-06-13) -- "Great Square Root" on Mac OSX Sequoia (15.6.1) using the RStudio IDE (https://www.rstudio.com). Analyses were also tested on R v4.4.0.
 In this repository we have used the `renv` package to archive the package versions so that you and reproduce the exact compute environment, should you wish to do so. 
 
 ### Installation Guide and Instructions for Use
