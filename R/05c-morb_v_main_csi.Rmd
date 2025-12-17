@@ -76,7 +76,7 @@ morb_csi <- st_distance(morb_proj, csi_proj, by_element = FALSE) %>%
   as.matrix() %>%
   as.data.frame() %>%
   mutate(grappe = morb_proj$grappe) %>%
-  pivot_longer(-grappe, names_to = "dhis2_id", values_to = "distance") %>%
+  pivot_longer(-grappe, names_to = "id", values_to = "distance") %>%
   mutate(distance = as.numeric(distance))
 
 morb_nearest_csi <- morb_csi %>%
@@ -92,7 +92,7 @@ main_csi <- st_distance(main_proj, csi_proj, by_element = FALSE) %>%
   as.matrix() %>%
   as.data.frame() %>%
   mutate(grappe = main_proj$grappe) %>%
-  pivot_longer(-grappe, names_to = "dhis2_id", values_to = "distance") %>%
+  pivot_longer(-grappe, names_to = "id", values_to = "distance") %>%
   mutate(distance = as.numeric(distance))
 
 main_nearest_csi <- main_csi %>%
