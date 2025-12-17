@@ -16,7 +16,7 @@
 
 library(here)
 
-source(here("R", "00-pkg-config.R"))
+source(here("R", "00-config.R"))
 
 
 if (!dir.exists(path_data_clean)) {
@@ -47,7 +47,7 @@ amr_dat <- osf_retrieve_file("ybj8x") %>%
 
 # Niger admin boundaries
 ### Map downloaded from https://data.humdata.org/dataset/cod-ab-ner
-niger_shp_url <- "https://data.humdata.org/dataset/c0e0998c-b45a-4aea-ac06-c1de1d94e596/resource/3d941be1-4607-434a-8795-de8f1de51b34/download/ner_adm_ignn_20230720_ab_shp.zip"
+niger_shp_url <- "https://data.humdata.org/dataset/c0e0998c-b45a-4aea-ac06-c1de1d94e596/resource/b2a4cf8d-da46-4f52-bed0-865160470dac/download/ner_admin_boundaries.shp.zip"
 
 niger_zip <- file.path(path_data_clean, "niger_shapefiles.zip")
 niger_dir <- file.path(path_data_clean, "niger_shapefiles")
