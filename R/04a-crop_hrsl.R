@@ -23,7 +23,7 @@ source(here("R", "00-config.R"))
 # Map downloaded from https://data.humdata.org/dataset/cod-ab-ner on 9 April 2024
 
 if(run_public){
-  niger_shp <- st_read(file.path(path_data_clean, "niger_shapefiles", "NER_admbnda_adm2_IGNN_20230720.shp"))
+  niger_shp <- st_read(file.path(path_data_clean, "niger_shapefiles", "ner_admin2.shp"))
 } else {
   niger_shp <- st_read(here("data", "untouched", "niger_shapefiles", "NER_admbnda_adm2_IGNN_20230720.shp"))
 }
@@ -31,7 +31,7 @@ if(run_public){
 # st_crs(niger_shp)
 
 study_admin2 <- c("Falmey", "Boboye", "Loga")
-study_shp <- niger_shp %>% dplyr::filter(ADM2_FR %in% study_admin2)
+study_shp <- niger_shp %>% dplyr::filter(adm2_name %in% study_admin2)
 
 study_union <- st_union(study_shp)
 
@@ -62,8 +62,13 @@ bbox_crop <- st_bbox(study_buffer)
 # Load Meta high-res population density data for Niger from Humanitarian Data Exchange 
 # Data downloaded from https://data.humdata.org/dataset/highresolutionpopulationdensitymaps-ner# on 13 November 2024
 
-pop_u5_raw <- data.table::fread(here("data", "untouched", "niger_popdens", "ner_children_under_five_2020.csv"))
-pop_gen_raw <- data.table::fread(here("data", "untouched", "niger_popdens", "ner_general_2020.csv"))
+if(run_public){
+  pop_u5_raw <- data.table::fread(file.path(path_data_clean, "ner_children_under_five_2020.csv"))
+  pop_gen_raw <- data.table::fread(file.path(path_data_clean, "ner_general_2020.csv"))
+} else {
+  pop_u5_raw <- data.table::fread(file.path(path_data_clean, "niger_popdens", "ner_children_under_five_2020.csv"))
+  pop_gen_raw <- data.table::fread(file.path(path_data_clean, "niger_popdens", "ner_general_2020.csv"))
+}
 
 pop_u5 <- subset(pop_u5_raw, longitude >= bbox_crop["xmin"] & longitude <= bbox_crop["xmax"] & 
                    latitude >= bbox_crop["ymin"] & latitude <= bbox_crop["ymax"]) %>%
