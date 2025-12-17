@@ -44,14 +44,14 @@ pop_raw <- readRDS(here("data", "output", "pop_crop.rds"))
 # Map downloaded from https://data.humdata.org/dataset/cod-ab-ner on 9 April 2024
 
 if(run_public){
-  niger_shp <- st_read(file.path(path_data_clean, "niger_shapefiles", "NER_admbnda_adm2_IGNN_20230720.shp"))
+  niger_shp <- st_read(file.path(path_data_clean, "niger_shapefiles", "ner_admin2.shp"))
 } else {
   niger_shp <- st_read(here("data", "untouched", "niger_shapefiles", "NER_admbnda_adm2_IGNN_20230720.shp"))
 }
 
 
 niger_shp <- niger_shp %>%
-  mutate(mordor_states = ifelse(ADM2_FR %in% c("Falmey", "Boboye", "Loga"), TRUE, FALSE))
+  mutate(mordor_states = ifelse(adm2_name %in% c("Falmey", "Boboye", "Loga"), TRUE, FALSE))
 
 niger_union <- niger_shp %>% 
   dplyr::filter(mordor_states) %>%
