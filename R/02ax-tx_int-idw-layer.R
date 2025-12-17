@@ -27,8 +27,7 @@ source(here("R", "02ax-layer-fns.R"))
 # Map downloaded from https://data.humdata.org/dataset/cod-ab-ner on 9 April 2024
 
 if(run_public){
-  niger_shp <- st_read(file.path(path_data_clean, "niger_shapefiles", 
-                                               "NER_admbnda_adm2_IGNN_20230720.shp"))
+  niger_shp <- st_read(file.path(path_data_clean, "niger_shapefiles", "ner_admin2.shp"))
 } else {
   niger_shp <- st_read(here("data", "untouched", "niger_shapefiles", "NER_admbnda_adm2_IGNN_20230720.shp"))
 }
@@ -42,7 +41,7 @@ if(run_public){
 
 # Define study region as Falmey, Boboye, and Loga districts in Niger
 niger_sub <- niger_shp %>%
-  dplyr::filter(ADM2_FR %in% c("Falmey", "Boboye", "Loga")) %>%
+  dplyr::filter(adm2_name %in% c("Falmey", "Boboye", "Loga")) %>%
   st_transform(global_crs)
 
 niger_boxgrid <- st_make_grid(niger_sub, n = c(pred_grid_dim, pred_grid_dim), what = "centers") %>%
