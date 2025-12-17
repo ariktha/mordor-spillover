@@ -35,7 +35,7 @@ quarto_render(here("R", "08-indiv-data.qmd"))
 quarto_render(here("R", "09-mordor-spillover-NP.qmd"))
 
 # Figures for manuscript
-knit(here("R", "manucript-fig-1.Rmd"), 
+knit(here("R", "manuscript-fig-1.Rmd"), 
      output = here("R", "markdown", "manuscript-fig-1.md"))
 knit(here("R", "manuscript-fig-2.Rmd"), 
      output = here("R", "markdown", "manuscript-fig-2.md"))

@@ -17,7 +17,7 @@
 library(here)
 
 source(here("R", "00-config.R"))
-
+options(timeout = 600)
 
 if (!dir.exists(path_data_clean)) {
   dir.create(path_data_clean, recursive = TRUE)
@@ -102,9 +102,9 @@ n_main <- 594
 n_csi <- 200 # There are 183 CSI locations in the 3 districts but closest is not always in the study region
 
 niger_shp <- st_read(
-  file.path(niger_dir, "NER_admbnda_adm2_IGNN_20230720.shp")
+  file.path(niger_dir, "ner_admin2.shp")
 ) %>%
-  mutate(mordor_states = ifelse(ADM2_FR %in% c("Falmey", "Boboye", "Loga"), TRUE, FALSE)) %>%
+  mutate(mordor_states = ifelse(adm2_name %in% c("Falmey", "Boboye", "Loga"), TRUE, FALSE)) %>%
   dplyr::filter(mordor_states)
 
 niger_union <- st_union(niger_shp)
