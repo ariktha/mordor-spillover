@@ -1,9 +1,15 @@
+renv::restore()
+
 library(here)
 library(quarto)
 library(knitr)
 
 # Download public data
 source(here("R", "00-download-public-data.R"))
+
+if (!dir.exists(path_data_clean)) {
+  dir.create(here("R", "markdown"), recursive = TRUE)
+}
 
 # Primary analysis: calculate exposure measures and run models
 source(here("R", "02a-tx_int-idw.R"))
