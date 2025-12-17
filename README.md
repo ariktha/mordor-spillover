@@ -51,7 +51,7 @@ To reproduce all analyses in the paper, we recommend that you:
 
 3. Download the public data from the OSF repository by running the script [`00-download-public-data.R`](https://github.com/ariktha/mordor-spillover/blob/main/R/00-download-public-data.R).
   
-4. All of the analysis scripts should run smoothly (scripts `02-xx.Rmd` to `09-xx.Rmd`).  
+4. All of the analysis scripts can be run sequentially using the script [`run-all.R`](https://github.com/ariktha/mordor-spillover/blob/main/R/run-all.R).
 
 ### Additional details
 
