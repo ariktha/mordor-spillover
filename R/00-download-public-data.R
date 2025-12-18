@@ -47,6 +47,11 @@ amr_dat <- osf_retrieve_file("ybj8x") %>%
 # np_dat <- osf_retrieve_file("5ftu2") %>%
 #   osf_download(conflict = "overwrite", path = path_data_clean, progress = TRUE)
 
+# # Individual-level resistance data
+# ### https://osf.io/5ftu2
+# amr_indiv <- osf_retrieve_file("5ftu2") %>%
+#   osf_download(conflict = "overwrite", path = path_data_clean, progress = TRUE)
+
 # Humanitarian Data Exchange ----------------------------------------------
 
 # Niger admin boundaries

@@ -52,7 +52,11 @@ amr_dat_long <- amr_dat %>%
 
 amr_indiv <- amr_dat_long %>%
   dplyr::filter(ab_class == "MLS") %>%
-  dplyr::select(sample_id, grappe, phase, ab_class, resistance)
+  dplyr::select(sample_id, grappe, phase, resistance) %>%
+  rename(mls_resistance = resistance)
+
+amr_indiv_pub <- amr_indiv %>%
+  dplyr::select(-sample_id)
 
 # Add summary columns -----------------------------------------------------
 
@@ -82,6 +86,8 @@ amr_dat_final <- amr_data_summ %>%
 saveRDS(amr_data_summ, here("data", "output", "amr_dat_full.rds"))
 saveRDS(amr_dat_final, file.path(path_internal, "amr_dat.rds"))
 saveRDS(amr_indiv, file.path(path_internal, "amr_indiv.rds"))
+
+saveRDS(amr_indiv_pub, file.path(path_data_clean, "amr_indiv.rds"))
 
 # Plots to check data -----------------------------------------------------
 
