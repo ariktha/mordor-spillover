@@ -43,7 +43,9 @@ if(run_public){
   morb_gps <- readRDS(file.path(path_data_clean, "morb_gps.rds"))
   main_gps <- readRDS(file.path(path_data_clean, "main_gps.rds"))
   
-  niger_shp <- readRDS(file.path(path_data_clean, "niger_shapefiles", "NER_admbnda_adm2_IGNN_20230720.shp"))
+  np_dat <- readRDS(file.path(path_data_clean, "np_dat.rds"))
+  
+  niger_shp <- st_read(file.path(path_data_clean, "niger_shapefiles", "ner_admin2.shp"))
   
 } else {
   morb_grappe <- readRDS(file.path(path_internal, "morb_grappe.rds"))
@@ -62,7 +64,7 @@ if(run_public){
 }
 
 niger_shp <- niger_shp %>%
-  mutate(mordor_states = ifelse(ADM2_FR %in% c("Falmey", "Boboye", "Loga"), TRUE, FALSE))
+  mutate(mordor_states = ifelse(adm2_name %in% c("Falmey", "Boboye", "Loga"), TRUE, FALSE))
 
 
 ```
@@ -71,7 +73,6 @@ niger_shp <- niger_shp %>%
 
 ```{r}
 #| label: clean NP data
-
 
 np_summ <- np_dat %>%
   group_by(phase, arm) %>%
@@ -342,7 +343,10 @@ ggplot(data = np_tx_int, aes(x = tx_int, y = prop_res, color = arm)) +
     breaks = c("azithro", "placebo"),
     labels = c("Azithromycin", "Placebo"),
     values = arms_colors
-  )
+  ) + 
+  annotate("text", x = 0.5, y = 0.5, label = "NOT\nREAL\nDATA",
+             hjust = 0.5, vjust = 0.5, col = "grey", cex = 8,
+             fontface = "bold", alpha = 0.5)
 
 ```
 
@@ -376,7 +380,10 @@ panelA <- ggplot(data = subset(np_tx_int, phase == "24 months" & tx_type == "azi
     labels = c("Azithromycin", "Placebo"),
     values = arms_colors
   ) +
-  ggtitle("A")
+  ggtitle("A") + 
+  annotate("text", x = 0.5, y = 0.5, label = "NOT REAL DATA",
+             hjust = 0.5, vjust = 0.5, col = "grey", cex = 16,
+             fontface = "bold", alpha = 0.5, angle = 30)
 
 panelB <- ggplot(data = subset(np_tx_int, phase == "24 months" & tx_type == "placebo"), 
        aes(x = tx_int, y = prop_res, color = arm)) +
@@ -401,16 +408,20 @@ panelB <- ggplot(data = subset(np_tx_int, phase == "24 months" & tx_type == "pla
     labels = c("Azithromycin", "Placebo"),
     values = arms_colors
   ) +
-  ggtitle("B")
+  ggtitle("B") + 
+  annotate("text", x = 0.5, y = 0.5, label = "NOT REAL DATA",
+             hjust = 0.5, vjust = 0.5, col = "grey", cex = 16,
+             fontface = "bold", alpha = 0.5, angle = 30)
 
 supp_fig_np <- panelA / panelB +
     # plot_annotation(tag_levels = 'A') +
   plot_layout(guides = "collect", axes = "collect_y") & theme(legend.position = "bottom")
 
-ggsave(supp_fig_np, filename = here("figs", "manuscript", "supp-figs", "supp_fig8-np.png"), 
+supp_fig_np
+
+ggsave(supp_fig_np, filename = here("output", "figs-manuscript", "supp-figs", "supp_fig8-np.png"), 
        width = 6, height = 8, dpi = 600, bg = "white")
 
-supp_fig_np
 ```
 
 **Supplementary figure 8**: Relationship between geographic treatment
@@ -478,7 +489,10 @@ ggplot(perm_combined, aes(x = cor, color = arm, fill = arm)) +
   theme(
     legend.position = "bottom",
     panel.spacing = unit(1, "lines")
-  )
+  ) + 
+  annotate("text", x = 0, y = 1.5, label = "NOT\nREAL\nDATA",
+             hjust = 0.5, vjust = 0.5, col = "darkgrey", cex = 12,
+             fontface = "bold", alpha = 0.5)
 
 
 ```

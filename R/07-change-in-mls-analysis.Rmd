@@ -280,9 +280,27 @@ panelB <- ggplot() +
 mls_change_plot <- diff_panelA / panelA / panelB +
   plot_layout(guides = "collect", axes = "collect_y") & theme(legend.position = "bottom")
 
-mls_change_plot
+mls_change_plot_w <- cowplot::ggdraw(mls_change_plot) +
+  cowplot::draw_label(
+    "NOT REAL DATA", 
+    size = 40, 
+    color = "grey80",
+    alpha = 0.5,
+    angle = 0,
+    x = 0.55,    
+    y = 0.555      
+  ) +
+  cowplot::draw_label(
+    "NOT REAL DATA", 
+    size = 40, 
+    color = "grey80",
+    alpha = 0.5,
+    angle = 0,
+    x = 0.55,    
+    y = 0.255      
+  )
 
-ggsave(mls_change_plot, filename = here("figs", "manuscript", "supp-figs", "supp_fig9.png"), 
+ggsave(mls_change_plot_w, filename = here("output", "figs-manuscript", "supp-figs", "supp_fig9.png"), 
        width = 7, height = 9, dpi = 600, bg = "white")
 
 ```
@@ -332,7 +350,10 @@ ggplot(subset(perm_combined, idw_power ==1), aes(x = cor, color = arm, fill = ar
   theme(
     legend.position = "bottom",
     panel.spacing = unit(1, "lines")
-  )
+  )  + 
+  annotate("text", x = 0, y = 1.5, label = "NOT\nREAL\nDATA",
+             hjust = 0.5, vjust = 0.5, col = "darkgrey", cex = 12,
+             fontface = "bold", alpha = 0.5)
 
 ```
 
@@ -355,7 +376,10 @@ ggplot(morb_dat) +
   ) +
   scale_y_continuous(name = "Fold change in MLS resistance") +
   theme_minimal(base_size = 14) +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom") + 
+  annotate("text", x = 1.5, y = 7.5, label = "NOT\nREAL\nDATA",
+             hjust = 0.5, vjust = 0.5, col = "darkgrey", cex = 12,
+             fontface = "bold", alpha = 0.5)
 
 ```
 
@@ -437,7 +461,16 @@ panelBf <- ggplot() +
 mls_fold_change_plot <- panelAf / panelBf +
   plot_layout(guides = "collect", axes = "collect_y") & theme(legend.position = "bottom")
 
-mls_fold_change_plot
+mls_fold_change_plot_w <- cowplot::ggdraw(mls_fold_change_plot) +
+  cowplot::draw_label(
+    "NOT REAL DATA", 
+    size = 40, 
+    color = "grey80",
+    alpha = 0.5,
+    angle = 0,
+    x = 0.55,    
+    y = 0.55      
+  )
 
 # ggsave(mls_change_plot, filename = here("figs", "reviewer-comments", "mls_abs_change.png"), 
 #        width = 6, height = 8, dpi = 600, bg = "white")
@@ -487,7 +520,10 @@ ggplot(subset(perm_combined, idw_power ==1), aes(x = corf, color = arm, fill = a
   theme(
     legend.position = "bottom",
     panel.spacing = unit(1, "lines")
-  )
+  ) + 
+  annotate("text", x = 0, y = 1.5, label = "NOT\nREAL\nDATA",
+             hjust = 0.5, vjust = 0.5, col = "darkgrey", cex = 12,
+             fontface = "bold", alpha = 0.5)
 
 ```
 

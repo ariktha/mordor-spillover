@@ -70,8 +70,8 @@ if(run_public){
   morb_rings_raw <- readRDS(file.path(path_data_clean, "morb_rings.rds"))
   amr_dat_raw <- readRDS(file.path(path_data_clean, "amr_dat.rds"))
 
-  niger_shp <- st_read(file.path(path_data_clean, "niger_shapefiles", "NER_admbnda_adm2_IGNN_20230720.shp")) %>%
-    mutate(mordor_states = ifelse(ADM2_FR %in% c("Falmey", "Boboye", "Loga"), TRUE, FALSE)) %>%
+  niger_shp <- st_read(file.path(path_data_clean, "niger_shapefiles", "ner_admin2.shp")) %>%
+    mutate(mordor_states = ifelse(adm2_name %in% c("Falmey", "Boboye", "Loga"), TRUE, FALSE)) %>%
     dplyr::filter(mordor_states == TRUE)
   
 } else {
@@ -195,11 +195,14 @@ rings_map <- ggplot() +
     color = "red"
   ) +
   # guides(color = guide_legend(override.aes = list(alpha = 0.7))) +
-  guides(color = "none")
+  guides(color = "none") + 
+  annotate("text", x = 3.16, y = 13.12, label = "NOT\nREAL\nDATA",
+             hjust = 0.5, vjust = 0.5, col = "grey", cex = 20,
+             fontface = "bold", alpha = 0.5) 
 
 rings_map
 
-ggsave(rings_map, filename = here("figs", "manuscript", "fig3-panelA.png"), 
+ggsave(rings_map, filename = here("output", "figs-manuscript", "fig3-panelA.png"), 
        width = 6, height = 4.5, dpi = 600, bg = "white")
 ```
 
@@ -239,11 +242,14 @@ rings_grappes_plot <- ggplot(subset(morb_rings, outer_radius <= 30)) +
     breaks = c("azithro", "placebo"),
     labels = c("Azithromycin", "Placebo"),
     values = arms_colors
-  )
+  ) + 
+  annotate("text", x = Inf, y = 2, label = "NOT REAL DATA",
+             hjust = 1, vjust = 1, col = "grey", cex = 6,
+             fontface = "bold", alpha = 0.5, angle = 0)
 
 rings_grappes_plot
 
-ggsave(rings_grappes_plot, filename = here("figs", "manuscript", "fig3-panelB.png"), 
+ggsave(rings_grappes_plot, filename = here("output", "figs-manuscript", "fig3-panelB.png"), 
        width = 6, height = 4.5, dpi = 600, bg = "white")
 ```
 
@@ -278,11 +284,14 @@ rings_corr_plot <-
   ) +
   scale_y_continuous(limits = c(0, 149), name = "MLS resistance gene abundance (normalized reads/million)") +
   theme(legend.position = "bottom",
-        panel.spacing.x = unit(1, "cm"))
+        panel.spacing.x = unit(1, "cm")) + 
+  annotate("text", x = 15000, y = 75, label = "NOT\nREAL\nDATA",
+             hjust = 0.5, vjust = 0.5, col = "grey", cex = 12,
+             fontface = "bold", alpha = 0.5, angle = 0)
 
 rings_corr_plot
 
-ggsave(rings_corr_plot, filename = here("figs", "manuscript", "fig3-panelC.png"), 
+ggsave(rings_corr_plot, filename = here("output", "figs-manuscript", "fig3-panelC.png"), 
        width = 6, height = 4.5, dpi = 600, bg = "white")
 ```
 
@@ -302,7 +311,7 @@ fig3_plot <- rings_map + rings_grappes_plot + rings_corr_plot + guide_area() +
 
 fig3_plot
 
-ggsave(fig3_plot, filename = here("figs", "manuscript", "fig3.png"), width = 9, height = 9)
+ggsave(fig3_plot, filename = here("output", "figs-manuscript", "fig3.png"), width = 9, height = 9)
 
 ```
 

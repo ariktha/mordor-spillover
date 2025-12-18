@@ -36,7 +36,10 @@ if(run_public){
 # Prep CSI locations ------------------------------------------------------
 
 if(run_public){
-  csi_loc <- readRDS(file.path(path_internal, "csi_gps.RDS"))
+  
+  csi_loc_raw <- readRDS(file.path(path_data_clean, "csi_gps.RDS"))
+  csi_loc <- csi_loc_raw %>%
+    st_as_sf(coords = c("longitude", "latitude"), crs = global_crs)
   
 } else {
   
@@ -61,7 +64,7 @@ if(run_public){
     longitude = map_dbl(lat_lon, 2)) %>%
     dplyr::select(`Dhis2 Id`, latitude, longitude) %>%
     drop_na() %>%
-    rename(dhis2_id = `Dhis2 Id`) %>%
+    rename(id = `Dhis2 Id`) %>%
     st_as_sf(coords = c("latitude", "longitude"), crs = 4326) %>%
     mutate(latitude = st_coordinates(.)[, 2],
            longitude = st_coordinates(.)[, 1]) %>%
@@ -82,9 +85,9 @@ morb_csi <- st_distance(morb_proj, csi_proj, by_element = FALSE) %>%
   units::set_units("km") %>%
   as.matrix() %>%
   as.data.frame() %>%
-  `colnames<-`(csi_proj[["dhis2_id"]]) %>%
+  `colnames<-`(csi_proj[["id"]]) %>%
   mutate(grappe = morb_proj[["grappe"]]) %>%
-  pivot_longer(-grappe, names_to = "dhis2_id", values_to = "distance") %>%
+  pivot_longer(-grappe, names_to = "id", values_to = "distance") %>%
   mutate(distance = as.numeric(distance))
 
 morb_nearest_csi <- morb_csi %>%
@@ -96,8 +99,8 @@ morb_grappe <- morb_grappe %>%
   left_join(morb_nearest_csi, by = "grappe")
 
 morb_csi <- morb_grappe %>%
-  dplyr::select(grappe, dhis2_id, distance) %>%
-  rename(nearest_csi = dhis2_id, dist_csi = distance)
+  dplyr::select(grappe, id, distance) %>%
+  rename(nearest_csi = id, dist_csi = distance)
 
 # Save the final data -----------------------------------------------------
 

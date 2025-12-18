@@ -60,6 +60,10 @@ dist_main_morb <- compute_distance_matrix(
   left_join(main_grappe %>% st_drop_geometry(), 
             by = "main_grappe")
 
+if (!dir.exists(here("data", "output"))) {
+  dir.create(here("data", "output"), recursive = TRUE)
+}
+
 saveRDS(dist_main_morb, here("data", "output", "dist_main_morb.rds"))
 
 # Calculate treatment intensity at morbidity trial villages ---------------

@@ -76,7 +76,7 @@ morb_csi <- st_distance(morb_proj, csi_proj, by_element = FALSE) %>%
   as.matrix() %>%
   as.data.frame() %>%
   mutate(grappe = morb_proj$grappe) %>%
-  pivot_longer(-grappe, names_to = "dhis2_id", values_to = "distance") %>%
+  pivot_longer(-grappe, names_to = "id", values_to = "distance") %>%
   mutate(distance = as.numeric(distance))
 
 morb_nearest_csi <- morb_csi %>%
@@ -92,7 +92,7 @@ main_csi <- st_distance(main_proj, csi_proj, by_element = FALSE) %>%
   as.matrix() %>%
   as.data.frame() %>%
   mutate(grappe = main_proj$grappe) %>%
-  pivot_longer(-grappe, names_to = "dhis2_id", values_to = "distance") %>%
+  pivot_longer(-grappe, names_to = "id", values_to = "distance") %>%
   mutate(distance = as.numeric(distance))
 
 main_nearest_csi <- main_csi %>%
@@ -135,10 +135,14 @@ ggplot(dist_long, aes(x = distance, y = type, group = type)) +
                              "Mortality-monitoring\nvillages")) +
   scale_alpha_manual(breaks = c("morb", "main"), values = c(0.5, 0)) +
   theme_minimal() +
-  theme(axis.title.y = element_blank(), legend.position = "none")
+  theme(axis.title.y = element_blank(), legend.position = "none") + 
+  annotate("text", x = Inf, y = Inf, label = "NOT REAL DATA",
+             hjust = 1, vjust = 0.5, col = "grey", cex = 16,
+             fontface = "bold", alpha = 0.5, angle = 30)
 
 # ggsave(here("figs", "reviewer-comments", "main_morb_csi.png"), width = 6, height = 4)
 
-ggsave(here("figs", "manuscript", "supp-figs", "supp_fig10.png"), width = 6, height = 4)
+ggsave(here("output", "figs-manuscript", "supp-figs", "supp_fig10.png"), 
+       width = 6, height = 4, create.dir = TRUE)
 
 ```
