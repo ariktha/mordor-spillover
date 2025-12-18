@@ -159,7 +159,7 @@ baseline_pri <- ggplot(aes = aes()) +
 
 baseline_pri
 
-ggsave(baseline_pri, filename = here("figs", "manuscript", "fig2-panelA.png"), 
+ggsave(baseline_pri, filename = here("output", "figs-manuscript", "fig2-panelA.png"), 
        width = 6, height = 4.5, dpi = 600, bg = "white")
 ```
 
@@ -202,7 +202,7 @@ baseline_nce <- ggplot(aes = aes()) +
 
 baseline_nce
 
-ggsave(baseline_nce, filename = here("figs", "manuscript", "fig2-panelC.png"), 
+ggsave(baseline_nce, filename = here("output", "figs-manuscript", "fig2-panelC.png"), 
        width = 6, height = 4.5, dpi = 600, bg = "white")
 ```
 
@@ -247,7 +247,7 @@ pri_24 <- ggplot(aes = aes()) +
 
 pri_24
 
-ggsave(pri_24, filename = here("figs", "manuscript", "fig2-panelB.png"), 
+ggsave(pri_24, filename = here("output", "figs-manuscript", "fig2-panelB.png"), 
        width = 6, height = 4.5, dpi = 600, bg = "white")
 ```
 
@@ -292,7 +292,7 @@ nce_24 <- ggplot(aes = aes()) +
 
 nce_24
 
-ggsave(nce_24, filename = here("figs", "manuscript", "fig2-panelD.png"), 
+ggsave(nce_24, filename = here("output", "figs-manuscript", "fig2-panelD.png"), 
        width = 6, height = 4.5, dpi = 600, bg = "white")
 ```
 
@@ -311,7 +311,7 @@ fig2_plot <- list(baseline_pri, pri_24, baseline_nce, nce_24) |>
 
 fig2_plot
 
-ggsave(fig2_plot, filename = here("figs", "manuscript", "fig2.png"), 
+ggsave(fig2_plot, filename = here("output", "figs-manuscript", "fig2.png"), 
        width = 12, height = 9, dpi = 600, bg = "white")
 
 ```

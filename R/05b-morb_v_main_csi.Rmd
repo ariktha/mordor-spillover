@@ -140,6 +140,7 @@ ggplot(dist_long, aes(x = distance, y = type, group = type)) +
 
 # ggsave(here("figs", "reviewer-comments", "main_morb_csi.png"), width = 6, height = 4)
 
-ggsave(here("figs", "manuscript", "supp-figs", "supp_fig10.png"), width = 6, height = 4)
+ggsave(here("output", "figs-manuscript", "supp-figs", "supp_fig10.png"), 
+       width = 6, height = 4, create.dir = TRUE)
 
 ```

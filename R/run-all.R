@@ -6,9 +6,10 @@ library(knitr)
 
 # Download public data
 source(here("R", "00-download-public-data.R"))
+source(here("R", "00-generate-sim-data.R"))
 
-if (!dir.exists(here("R", "markdown"))) {
-  dir.create(here("R", "markdown"), recursive = TRUE)
+if (!dir.exists(here("output"))) {
+  dir.create(here("output"), recursive = TRUE)
 }
 
 # Primary analysis: calculate exposure measures and run models
@@ -26,28 +27,30 @@ source(here("R", "04b-process_hrsl.R"))
 ## Distance to nearest CSI
 source(here("R", "05a-process_csi_dist.R"))
 knit(here("R", "05b-morb_v_main_csi.Rmd"), 
-     output = here("R", "markdown", "05b-morb_v_main_csi.md"))
+     output = here("output", "05b-morb_v_main_csi.md"))
 
 # Log-linear models and change in resistance analysis
 knit(here("R", "06-log_linear_models.Rmd"), 
-     output = here("R", "markdown", "06-log_linear_models.md"))
+     output = here("output", "06-log_linear_models.md"))
 knit(here("R", "07-change-in-mls-analysis.Rmd"), 
-     output = here("R", "markdown", "07-change-in-mls-analysis.md"))
+     output = here("output", "07-change-in-mls-analysis.md"))
 
 # Individual-level analysis
-quarto_render(here("R", "08-indiv-data.qmd"))
+quarto_render(here("R", "08-indiv-data.qmd"),
+              output_file = here("output", "08-indiv-data.html"))
 
 # Phenotypic resistance analysis
-quarto_render(here("R", "09-mordor-spillover-NP.qmd"))
+quarto_render(here("R", "09-mordor-spillover-NP.qmd"),
+              output_file = here("output", "09-mordor-spillover-NP.html"))
 
 # Figures for manuscript
 knit(here("R", "manuscript-fig-1.Rmd"), 
-     output = here("R", "markdown", "manuscript-fig-1.md"))
+     output = here("output", "manuscript-fig-1.md"))
 knit(here("R", "manuscript-fig-2.Rmd"), 
-     output = here("R", "markdown", "manuscript-fig-2.md"))
+     output = here("output", "manuscript-fig-2.md"))
 knit(here("R", "manuscript-fig-3.Rmd"), 
-     output = here("R", "markdown", "manuscript-fig-3.md"))
+     output = here("output", "manuscript-fig-3.md"))
 
 ## Supplementary figures for manuscript
 knit(here("R", "manuscript-supp-figs.Rmd"), 
-     output = here("R", "markdown", "manuscript-supp-figs.md"))
+     output = here("output", "manuscript-supp-figs.md"))

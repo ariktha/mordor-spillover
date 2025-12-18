@@ -157,7 +157,7 @@ ggplot(data = cor_tx_int_pwr2, aes(group = arm, color = arm)) +
              fontface = "bold", alpha = 0.5)
 
 ggsave(
-  here("figs", "manuscript", "supp-figs", "supp_fig1.png"),
+  here("output", "figs-manuscript", "supp-figs", "supp_fig1.png"),
   bg = "white",
   width = 8,
   height = 5
@@ -243,7 +243,7 @@ ggplot() + geom_boxplot(data = loo_cor,
              fontface = "bold", alpha = 0.5)
 
 ggsave(
-  here("figs", "manuscript", "supp-figs", "supp_fig2.png"),
+  here("output", "figs-manuscript", "supp-figs", "supp_fig2.png"),
   bg = "white",
   width = 7,
   height = 5
@@ -302,7 +302,7 @@ supp_fig3_plot <- azithro_doses_plot / azithro_txint_plot +
 
 supp_fig3_plot
 
-ggsave(here("figs", "manuscript", "supp-figs", "supp_fig3.png"), 
+ggsave(here("output", "figs-manuscript", "supp-figs", "supp_fig3.png"), 
        width = 8, height = 7, dpi = 300, bg = "white")
 
 ```
@@ -418,7 +418,7 @@ hrsl_plot <- p1 / p2 +
 
 hrsl_plot
 
-ggsave(here("figs", "manuscript", "supp-figs", "supp_fig4.png"), hrsl_plot, width = 8, height = 7, dpi = 600, bg = "white")
+ggsave(here("output", "figs-manuscript", "supp-figs", "supp_fig4.png"), hrsl_plot, width = 8, height = 7, dpi = 600, bg = "white")
 
 
 ```
@@ -492,7 +492,7 @@ csi_plot <- q1 / q2 + plot_annotation(tag_levels = 'A') + plot_layout(guides = "
 
 csi_plot
 
-ggsave(here("figs", "manuscript", "supp-figs", "supp_fig5.png"), 
+ggsave(here("output", "figs-manuscript", "supp-figs", "supp_fig5.png"), 
        csi_plot, width = 7, height = 7, dpi = 600, bg = "white")
 
 
@@ -641,7 +641,7 @@ other_abs_plot_with_ps <- cowplot::ggdraw(other_abs_plot_with_p) +
     y = 0.55      
   )
 
-ggsave(here("figs", "manuscript", "supp-figs", "supp_fig6-with-p.png"), other_abs_plot_with_ps, bg = "white", width = 11, height = 9, dpi = 300)
+ggsave(here("output", "figs-manuscript", "supp-figs", "supp_fig6-with-p.png"), other_abs_plot_with_ps, bg = "white", width = 11, height = 9, dpi = 300)
 
 ```
 
@@ -746,7 +746,7 @@ other_abs_plots <- cowplot::ggdraw(other_abs_plot_with_p) +
     y = 0.55      
   )
 
-ggsave(here("figs", "manuscript", "supp-figs", "supp_fig6.png"), other_abs_plots, bg = "white", width = 11, height = 9, dpi = 300)
+ggsave(here("output", "figs-manuscript", "supp-figs", "supp_fig6.png"), other_abs_plots, bg = "white", width = 11, height = 9, dpi = 300)
 
 ```
 
@@ -830,7 +830,7 @@ s7 <- cowplot::ggdraw(p) +
     y = 0.55      
   )
 
-ggsave(here("figs", "manuscript", "supp-figs", "supp_fig7.png"), 
+ggsave(here("output", "figs-manuscript", "supp-figs", "supp_fig7.png"), 
        width = 8, height = 5.3, bg = "white")
 
 ```

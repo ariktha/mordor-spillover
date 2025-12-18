@@ -202,7 +202,7 @@ rings_map <- ggplot() +
 
 rings_map
 
-ggsave(rings_map, filename = here("figs", "manuscript", "fig3-panelA.png"), 
+ggsave(rings_map, filename = here("output", "figs-manuscript", "fig3-panelA.png"), 
        width = 6, height = 4.5, dpi = 600, bg = "white")
 ```
 
@@ -249,7 +249,7 @@ rings_grappes_plot <- ggplot(subset(morb_rings, outer_radius <= 30)) +
 
 rings_grappes_plot
 
-ggsave(rings_grappes_plot, filename = here("figs", "manuscript", "fig3-panelB.png"), 
+ggsave(rings_grappes_plot, filename = here("output", "figs-manuscript", "fig3-panelB.png"), 
        width = 6, height = 4.5, dpi = 600, bg = "white")
 ```
 
@@ -291,7 +291,7 @@ rings_corr_plot <-
 
 rings_corr_plot
 
-ggsave(rings_corr_plot, filename = here("figs", "manuscript", "fig3-panelC.png"), 
+ggsave(rings_corr_plot, filename = here("output", "figs-manuscript", "fig3-panelC.png"), 
        width = 6, height = 4.5, dpi = 600, bg = "white")
 ```
 
@@ -311,7 +311,7 @@ fig3_plot <- rings_map + rings_grappes_plot + rings_corr_plot + guide_area() +
 
 fig3_plot
 
-ggsave(fig3_plot, filename = here("figs", "manuscript", "fig3.png"), width = 9, height = 9)
+ggsave(fig3_plot, filename = here("output", "figs-manuscript", "fig3.png"), width = 9, height = 9)
 
 ```
 

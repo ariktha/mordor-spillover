@@ -185,7 +185,7 @@ niger_map
 
 ggsave(
   niger_map,
-  filename = here("figs", "manuscript", "fig1_panelA.png"),
+  filename = here("output", "figs-manuscript", "fig1_panelA.png"),
   width = 6,
   height = 4,
   dpi = 300
@@ -259,7 +259,7 @@ all_grappes_plot
 
 ggsave(
   all_grappes_plot,
-  filename = here("figs", "manuscript", "fig1_panelB.png"),
+  filename = here("output", "figs-manuscript", "fig1_panelB.png"),
   width = 6,
   height = 4,
   dpi = 300
@@ -310,7 +310,7 @@ n_doses_plot
 
 ggsave(
   n_doses_plot,
-  filename = here("figs", "manuscript", "fig1_panelC.png"),
+  filename = here("output", "figs-manuscript", "fig1_panelC.png"),
   width = 6,
   height = 4,
   dpi = 300
@@ -361,7 +361,7 @@ tx_int_layer_plot
 
 ggsave(
   tx_int_layer_plot,
-  filename = here("figs", "manuscript", "fig1_panelD.png"),
+  filename = here("output", "figs-manuscript", "fig1_panelD.png"),
   width = 6,
   height = 4,
   dpi = 300
@@ -376,13 +376,13 @@ fig1_plot <-  (niger_map + all_grappes_plot + plot_layout(widths = c(1, 1))) /
 
 ggsave(
   fig1_plot,
-  filename = here("figs", "manuscript", "fig1.png"),
+  filename = here("output", "figs-manuscript", "fig1.png"),
   width = 10,
   height = 12,
   dpi = 300
 )
 
-knitr::include_graphics(here("figs", "manuscript", "fig1.png"))
+knitr::include_graphics(here("output", "figs-manuscript", "fig1.png"))
 
 ```
 

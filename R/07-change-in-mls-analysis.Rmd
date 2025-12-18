@@ -300,7 +300,7 @@ mls_change_plot_w <- cowplot::ggdraw(mls_change_plot) +
     y = 0.255      
   )
 
-ggsave(mls_change_plot_w, filename = here("figs", "manuscript", "supp-figs", "supp_fig9.png"), 
+ggsave(mls_change_plot_w, filename = here("output", "figs-manuscript", "supp-figs", "supp_fig9.png"), 
        width = 7, height = 9, dpi = 600, bg = "white")
 
 ```
