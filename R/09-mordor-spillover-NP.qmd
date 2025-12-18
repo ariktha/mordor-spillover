@@ -43,7 +43,9 @@ if(run_public){
   morb_gps <- readRDS(file.path(path_data_clean, "morb_gps.rds"))
   main_gps <- readRDS(file.path(path_data_clean, "main_gps.rds"))
   
-  niger_shp <- readRDS(file.path(path_data_clean, "niger_shapefiles", "ner_admin2.shp"))
+  np_dat <- readRDS(file.path(path_data_clean, "np_dat.rds"))
+  
+  niger_shp <- st_read(file.path(path_data_clean, "niger_shapefiles", "ner_admin2.shp"))
   
 } else {
   morb_grappe <- readRDS(file.path(path_internal, "morb_grappe.rds"))
@@ -340,9 +342,9 @@ ggplot(data = np_tx_int, aes(x = tx_int, y = prop_res, color = arm)) +
     labels = c("Azithromycin", "Placebo"),
     values = arms_colors
   ) + 
-  annotate("text", x = 0.5, y = 0.5, label = "NOT REAL DATA",
-             hjust = 0.5, vjust = 0.5, col = "grey", cex = 16,
-             fontface = "bold", alpha = 0.5, angle = 30)
+  annotate("text", x = 0.5, y = 0.5, label = "NOT\nREAL\nDATA",
+             hjust = 0.5, vjust = 0.5, col = "grey", cex = 8,
+             fontface = "bold", alpha = 0.5)
 
 ```
 

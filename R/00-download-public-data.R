@@ -42,6 +42,10 @@ morb_rings <- osf_retrieve_file("zm4dx") %>%
 amr_dat <- osf_retrieve_file("ybj8x") %>%
   osf_download(conflict = "overwrite", path = path_data_clean, progress = TRUE)
 
+# # Phenotypic resistance data
+# ### https://osf.io/5ftu2
+# np_dat <- osf_retrieve_file("5ftu2") %>%
+#   osf_download(conflict = "overwrite", path = path_data_clean, progress = TRUE)
 
 # Humanitarian Data Exchange ----------------------------------------------
 
