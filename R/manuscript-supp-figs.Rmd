@@ -151,7 +151,10 @@ ggplot(data = cor_tx_int_pwr2, aes(group = arm, color = arm)) +
     breaks = c("azithro", "placebo"),
     labels = c("Azithromycin", "Placebo"),
     values = arms_colors
-  )
+  )  + 
+  annotate("text", x = 0.5, y = 75, label = "NOT\nREAL\nDATA",
+             hjust = 0.5, vjust = 0.5, col = "grey", cex = 16,
+             fontface = "bold", alpha = 0.5)
 
 ggsave(
   here("figs", "manuscript", "supp-figs", "supp_fig1.png"),
@@ -234,7 +237,10 @@ ggplot() + geom_boxplot(data = loo_cor,
     breaks = c("azithro", "placebo"),
     labels = c("Azithromycin", "Placebo"),
     values = arms_colors
-  ) 
+  ) + 
+  annotate("text", x = 1.5, y = 0.25, label = "NOT\nREAL\nDATA",
+             hjust = 0.5, vjust = 0.5, col = "grey", cex = 12,
+             fontface = "bold", alpha = 0.5)
 
 ggsave(
   here("figs", "manuscript", "supp-figs", "supp_fig2.png"),
@@ -274,7 +280,10 @@ azithro_doses_plot <- ggplot(data = dat_fig3,
                                          10^3)) +
   scale_y_continuous(name = expression("Azithromycin doses\ndistributed in the band x" ~
                                          10^3)) +
-  theme(axis.title.y = element_text(hjust = 0.5, vjust = 0.5))
+  theme(axis.title.y = element_text(hjust = 0.5, vjust = 0.5))  + 
+  annotate("text", x = 10, y = 15, label = "NOT\nREAL\nDATA",
+             hjust = 0.5, vjust = 0.5, col = "grey", cex = 8,
+             fontface = "bold", alpha = 0.5)
 
 azithro_txint_plot <- ggplot(data = dat_fig3, aes(x = total_children / 1000, y = tx_int)) + 
   geom_point() +
@@ -283,7 +292,10 @@ azithro_txint_plot <- ggplot(data = dat_fig3, aes(x = total_children / 1000, y =
   theme_minimal(base_size = 14) +
   scale_x_continuous(name = expression("Number of children in the distance band x" ~
                                          10^3)) +
-  scale_y_continuous(name = expression("Geographical treatment\nintensity of azithromycin"))
+  scale_y_continuous(name = expression("Geographical treatment\nintensity of azithromycin"))  + 
+  annotate("text", x = 10, y = 0.5, label = "NOT\nREAL\nDATA",
+             hjust = 0.5, vjust = 0.5, col = "grey", cex = 8,
+             fontface = "bold", alpha = 0.5)
 
 supp_fig3_plot <- azithro_doses_plot / azithro_txint_plot +
   plot_annotation(tag_levels = 'A') 
@@ -361,7 +373,10 @@ p1 <- ggplot(morb_pop,
     breaks = c("azithro", "placebo"),
     labels = c("Azithromycin", "Placebo"),
     values = arms_colors
-  )
+  ) + 
+  annotate("text", x = 20, y = 15000, label = "NOT\nREAL\nDATA",
+             hjust = 0.5, vjust = 0.5, col = "grey", cex = 10,
+             fontface = "bold", alpha = 0.5)
 
 p2 <- ggplot(morb_pop, aes(
   x = u5_pop_dens,
@@ -392,7 +407,10 @@ p2 <- ggplot(morb_pop, aes(
   ) +
   theme(legend.position = "bottom",
         panel.spacing.x = unit(0.6, "cm")) +
-  ylim(c(0, 200))
+  ylim(c(0, 200))  + 
+  annotate("text", x = 20, y = 100, label = "NOT\nREAL\nDATA",
+             hjust = 0.5, vjust = 0.5, col = "grey", cex = 8,
+             fontface = "bold", alpha = 0.5)
 
 hrsl_plot <- p1 / p2 +
   plot_annotation(tag_levels = 'A') + plot_layout(heights = c(0.4, 0.6), guides = "collect")  &
@@ -442,7 +460,10 @@ q1 <- ggplot(morb_csi, aes(y = tx_int, x = dist_csi, color = arm)) +
     breaks = c("azithro", "placebo"),
     labels = c("Azithromycin", "Placebo"),
     values = arms_colors
-  )
+  ) + 
+  annotate("text", x = 3.8, y = 0.5, label = "NOT REAL DATA",
+             hjust = 0.5, vjust = 0.5, col = "grey", cex = 16,
+             fontface = "bold", alpha = 0.5)
 
 q2 <- ggplot(morb_csi, aes(x = dist_csi, y = avg_res, color = arm)) + 
   geom_point() +
@@ -461,7 +482,10 @@ q2 <- ggplot(morb_csi, aes(x = dist_csi, y = avg_res, color = arm)) +
     labels = c("Azithromycin", "Placebo"),
     values = arms_colors
   ) +
-  theme(panel.spacing.x = unit(0.8, "cm"))
+  theme(panel.spacing.x = unit(0.8, "cm")) + 
+  annotate("text", x = 4, y = 65, label = "NOT\nREAL\nDATA",
+             hjust = 0.5, vjust = 0.5, col = "grey", cex = 12,
+             fontface = "bold", alpha = 0.5)
 
 csi_plot <- q1 / q2 + plot_annotation(tag_levels = 'A') + plot_layout(guides = "collect") &
   theme(legend.position = 'bottom')
@@ -600,12 +624,24 @@ fig6_p3_with_p <- ggplot(data = subset(other_abs_dat, group_id == 3),
   scale_x_continuous(n.breaks = 6, name = "Geographic treatment intensity of azithromycin") +
   ylim(c(0, 2000))
 
-other_abs_plot_with_p <- fig6_p1_with_p + fig6_p2_with_p + fig6_p3_with_p +
-  plot_layout(guides = "collect", axes = "collect") & theme(legend.position = "bottom")
+other_abs_plot_with_p <- fig6_p1_with_p + fig6_p2_with_p + fig6_p3_with_p + 
+  plot_layout(guides = "collect", axes = "collect") & 
+  theme(legend.position = "bottom")
 
 other_abs_plot_with_p
 
-ggsave(here("figs", "manuscript", "supp-figs", "supp_fig6-with-p.png"), other_abs_plot_with_p, bg = "white", width = 11, height = 9, dpi = 300)
+other_abs_plot_with_ps <- cowplot::ggdraw(other_abs_plot_with_p) +
+  cowplot::draw_label(
+    "NOT REAL DATA", 
+    size = 80, 
+    color = "grey80",
+    alpha = 0.5,
+    angle = 30,
+    x = 0.55,    
+    y = 0.55      
+  )
+
+ggsave(here("figs", "manuscript", "supp-figs", "supp_fig6-with-p.png"), other_abs_plot_with_ps, bg = "white", width = 11, height = 9, dpi = 300)
 
 ```
 
@@ -699,9 +735,18 @@ fig6_p3 <- ggplot(data = subset(other_abs_dat, group_id == 3),
 other_abs_plot <- fig6_p1 + fig6_p2 + fig6_p3 +
   plot_layout(guides = "collect", axes = "collect") & theme(legend.position = "bottom")
 
-other_abs_plot
+other_abs_plots <- cowplot::ggdraw(other_abs_plot_with_p) +
+  cowplot::draw_label(
+    "NOT REAL DATA", 
+    size = 80, 
+    color = "grey80",
+    alpha = 0.5,
+    angle = 30,
+    x = 0.55,    
+    y = 0.55      
+  )
 
-ggsave(here("figs", "manuscript", "supp-figs", "supp_fig6.png"), other_abs_plot, bg = "white", width = 11, height = 9, dpi = 300)
+ggsave(here("figs", "manuscript", "supp-figs", "supp_fig6.png"), other_abs_plots, bg = "white", width = 11, height = 9, dpi = 300)
 
 ```
 
@@ -742,7 +787,7 @@ dat_supp_fig7 <- morb_tx_int_raw %>%
 
 ```{r supp fig 7}
 
-ggplot() +
+p <- ggplot() +
   geom_point(data = dat_supp_fig7, 
              aes(y = avg_res, x = tx_int, group = arm, color = arm, size = n_children),
              alpha = 0.6) +
@@ -773,6 +818,17 @@ ggplot() +
   ) +
   facet_wrap(~ phase) +
   guides(color = guide_legend(override.aes = list(shape = 15, alpha = 0.8, size = 5)))
+
+s7 <- cowplot::ggdraw(p) +
+  cowplot::draw_label(
+    "NOT REAL DATA", 
+    size = 80, 
+    color = "grey80",
+    alpha = 0.5,
+    angle = 30,
+    x = 0.55,    
+    y = 0.55      
+  )
 
 ggsave(here("figs", "manuscript", "supp-figs", "supp_fig7.png"), 
        width = 8, height = 5.3, bg = "white")
