@@ -14,7 +14,7 @@ rm(list = ls())
 library(here)
 source(here("R", "00-pkg-config.R"))
 
-run_public <- TRUE # Set to FALSE to use internal GPS data
+run_public <- FALSE # Set to FALSE to use internal GPS data
 
 # File paths and parallel processing ----
 

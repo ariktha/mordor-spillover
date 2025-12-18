@@ -56,7 +56,8 @@ amr <- amr_indiv %>%
             by = join_by(grappe)) %>%
   mutate(phase = factor(ifelse(phase == 0, "Baseline", "24 months"), 
                         levels = c("Baseline", "24 months"), 
-                        ordered = TRUE))
+                        ordered = TRUE)) %>%
+  rename(MLS = resistance)
 
 amr_grappe_summ <- amr %>%
   group_by(grappe, grappe_num, arm, phase) %>%

@@ -110,6 +110,8 @@ dist_long <- morb_grappe %>%
               dplyr::select(grappe, distance) %>%
               mutate(type = "main"))
 
+saveRDS(dist_long, here("data", "output", "dist_main_morb_csi.rds"))
+
 dist_long %>%
   group_by(type) %>%
   summarise(mean_dist = mean(distance),

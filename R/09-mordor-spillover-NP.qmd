@@ -49,8 +49,8 @@ if(run_public){
   morb_grappe <- readRDS(file.path(path_internal, "morb_grappe.rds"))
   main_grappe <- readRDS(file.path(path_internal, "main_grappe.rds"))
   
-  morb_tx_int_raw <- readRDS(file.path(path_internal, "morb_tx_int.rds"))
-  morb_rings_raw <- readRDS(file.path(path_internal, "morb_rings.rds"))
+  morb_tx_int <- readRDS(file.path(path_internal, "morb_tx_int.rds"))
+  morb_rings <- readRDS(file.path(path_internal, "morb_rings.rds"))
   
   morb_gps <- readRDS(file.path(path_internal, "morb_gps.rds"))
   main_gps <- readRDS(file.path(path_internal, "main_gps.rds"))
@@ -205,6 +205,8 @@ ggplot() +
 np_tx_int <- np_dat %>%
   left_join(morb_tx_int %>% dplyr::filter(idw_power == 1), by = c("grappe", "arm"), relationship = "many-to-many") %>%
   mutate(zero_growth = ifelse(n_grew == 0, TRUE, FALSE))
+
+saveRDS(np_tx_int, here("data", "output", "np_tx_int.RDS"))
 
 np_corr <- np_tx_int %>%
   group_by(arm, phase, tx_type) %>%

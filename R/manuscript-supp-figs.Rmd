@@ -198,6 +198,8 @@ loo_cor <- morb_tx_int_raw %>%
                              levels = c("Primary exposure", "Negative control exposure"), 
                              ordered = TRUE))
 
+saveRDS(loo_cor, here("data", "output", "loo-cor.RDS"))
+
 mls_cor <- cor_tx_int_raw %>%
   dplyr::filter(ab_class == "MLS",
                 idw_power == 1) %>%
