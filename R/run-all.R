@@ -7,7 +7,7 @@ library(knitr)
 # Download public data
 source(here("R", "00-download-public-data.R"))
 
-if (!dir.exists(path_data_clean)) {
+if (!dir.exists(here("R", "markdown"))) {
   dir.create(here("R", "markdown"), recursive = TRUE)
 }
 

@@ -507,9 +507,6 @@ ggplot(subset(ring_results_table, term == "az_0_10"), aes(x = exp_est, y = arm, 
   theme_minimal(base_size = 14) +
   theme(legend.position = "bottom")
 
-ggsave(here("figs", "az-ring-model-results.png"),
-       width = 8, height = 6, dpi = 600, bg = "white")
-
 ```
 
 #### Full results table
