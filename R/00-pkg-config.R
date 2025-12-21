@@ -23,6 +23,10 @@ library(osfr)
 
 # Visuals -----------------------------------------------------------------
 
+library(knitr)
+library(kableExtra)
+library(quarto)
+
 library(patchwork)
 library(ggpubr)
 require(ggtext)

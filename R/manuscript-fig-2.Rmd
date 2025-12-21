@@ -153,8 +153,8 @@ baseline_pri <- ggplot(aes = aes()) +
     alpha = 0.8,
     size = 5
   ))) + 
-  annotate("text", x = 0.5, y = 75, label = "NOT\nREAL\nDATA",
-             hjust = 0.5, vjust = 0.5, col = "grey", cex = 20,
+  annotate("text", x = 0.5, y = 75, label = watermark_text_ml,
+             hjust = 0.5, vjust = 0.5, col = watermark_color, cex = 20,
              fontface = "bold", alpha = 0.5, angle = 0)
 
 baseline_pri
@@ -196,8 +196,8 @@ baseline_nce <- ggplot(aes = aes()) +
     alpha = 0.8,
     size = 5
   )))+ 
-  annotate("text", x = 0.5, y = 75, label = "NOT\nREAL\nDATA",
-             hjust = 0.5, vjust = 0.5, col = "grey", cex = 20,
+  annotate("text", x = 0.5, y = 75, label = watermark_text_ml,
+             hjust = 0.5, vjust = 0.5, col = watermark_color, cex = 20,
              fontface = "bold", alpha = 0.5, angle = 0)
 
 baseline_nce
@@ -241,8 +241,8 @@ pri_24 <- ggplot(aes = aes()) +
     alpha = 0.8,
     size = 5
   )))+ 
-  annotate("text", x = 0.5, y = 75, label = "NOT\nREAL\nDATA",
-             hjust = 0.5, vjust = 0.5, col = "grey", cex = 20,
+  annotate("text", x = 0.5, y = 75, label = watermark_text_ml,
+             hjust = 0.5, vjust = 0.5, col = watermark_color, cex = 20,
              fontface = "bold", alpha = 0.5, angle = 0)
 
 pri_24
@@ -286,8 +286,8 @@ nce_24 <- ggplot(aes = aes()) +
     alpha = 0.8,
     size = 5
   ))) + 
-  annotate("text", x = 0.5, y = 75, label = "NOT\nREAL\nDATA",
-             hjust = 0.5, vjust = 0.5, col = "grey", cex = 20,
+  annotate("text", x = 0.5, y = 75, label = watermark_text_ml,
+             hjust = 0.5, vjust = 0.5, col = watermark_color, cex = 20,
              fontface = "bold", alpha = 0.5, angle = 0)
 
 nce_24

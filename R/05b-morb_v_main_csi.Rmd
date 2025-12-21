@@ -136,8 +136,8 @@ ggplot(dist_long, aes(x = distance, y = type, group = type)) +
   scale_alpha_manual(breaks = c("morb", "main"), values = c(0.5, 0)) +
   theme_minimal() +
   theme(axis.title.y = element_blank(), legend.position = "none") + 
-  annotate("text", x = Inf, y = Inf, label = "NOT REAL DATA",
-             hjust = 1, vjust = 0.5, col = "grey", cex = 16,
+  annotate("text", x = Inf, y = Inf, label = watermark_text,
+             hjust = 1, vjust = 0.5, col = watermark_color, cex = 16,
              fontface = "bold", alpha = 0.5, angle = 30)
 
 # ggsave(here("figs", "reviewer-comments", "main_morb_csi.png"), width = 6, height = 4)

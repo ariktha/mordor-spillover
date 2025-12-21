@@ -16,6 +16,10 @@ source(here("R", "00-pkg-config.R"))
 
 run_public <- FALSE # Set to FALSE to use internal GPS data
 
+watermark_text <- ifelse(run_public, "NOT REAL DATA", NA)
+watermark_text_ml <- ifelse(run_public, "NOT\nREAL\nDATA", NA)
+watermark_color <- ifelse(run_public, "darkgrey", NA)
+
 # File paths and parallel processing ----
 
 data_folder_path <- "/Users/ariktha/Library/CloudStorage/Box-Box/MORDOR Data/data"

@@ -12,7 +12,7 @@ editor:
   markdown:
     wrap: 72
 execute:
-  cache: true
+  cache: false
   warning: false
 ---
 
@@ -39,7 +39,8 @@ if(run_public){
   morb_grappe <- readRDS(file.path(path_internal, "morb_grappe.rds"))
   morb_tx_int <- readRDS(file.path(path_internal, "morb_tx_int.rds"))
   amr_dat <- readRDS(file.path(path_internal, "amr_dat.rds"))
-  amr_indiv <- readRDS(file.path(path_internal, "amr_indiv.rds")) 
+  amr_indiv <- readRDS(file.path(path_internal, "amr_indiv.rds")) %>%
+    rename(resistance = mls_resistance)
 }
 ```
 
@@ -58,11 +59,7 @@ amr <- amr_indiv %>%
   mutate(phase = factor(ifelse(phase == 0, "Baseline", "24 months"), 
                         levels = c("Baseline", "24 months"), 
                         ordered = TRUE)) %>%
-<<<<<<< HEAD
   rename(MLS = resistance)
-=======
-  rename(MLS = mls_resistance)
->>>>>>> fd6bdbbe6ae56db8b755ec290c0ba914ab3be251
 
 amr_grappe_summ <- amr %>%
   group_by(grappe, grappe_num, arm, phase) %>%
@@ -103,7 +100,10 @@ panelA <- ggplot() +
   scale_color_manual(values = c("azithro" = "#f1a226", "placebo" = "#003f5c"),
                      labels = c("azithro" = "Azithromycin", "placebo" = "Placebo"),
                      name = "Monitoring village treatment") +
-  scale_x_discrete(name = "AMR-monitoring village")
+  scale_x_discrete(name = "AMR-monitoring village") + 
+  annotate("text", x = 0.5, y = 225, label = watermark_text,
+             hjust = 0.5, vjust = 0.5, col = watermark_color, cex = 20,
+             fontface = "bold", alpha = 0.5)
 
 panelA
 
@@ -131,7 +131,10 @@ ggplot(data = amr_grappe_summ, aes(x = prevalence, y = mean_mls)) +
                                  arm = c("placebo" = "Placebo", "azithro" = "Azithromycin"))) +
   theme(legend.position = "none",
         panel.border = element_rect(fill = NA, color = "black")) +
-  ggpubr::stat_cor()
+  ggpubr::stat_cor() + 
+  annotate("text", x = 0.5, y = 60, label = watermark_text,
+             hjust = 0.5, vjust = 0.5, col = watermark_color, cex = 20,
+             fontface = "bold", alpha = 0.5)
 
 ```
 
@@ -153,7 +156,10 @@ panelB <- ggplot(data = amr_grappe_summ, aes(x = prevalence, y = mean_mls, color
   facet_grid(~phase, 
              labeller = labeller(phase = c(`0` = "Baseline", `24` = "24 months"))) +
   theme(legend.position = "bottom") +
-  ggpubr::stat_cor(show.legend = FALSE)
+  ggpubr::stat_cor(show.legend = FALSE) + 
+  annotate("text", x = 0.5, y = 60, label = watermark_text,
+             hjust = 0.5, vjust = 0.5, col = watermark_color, cex = 20,
+             fontface = "bold", alpha = 0.5)
 
 panelB
 
@@ -162,7 +168,7 @@ panelA / panelB +
   plot_annotation(tag_levels = "A") &
   theme(legend.position = "bottom")
 
-ggsave(here("figs", "manuscript", "supp-figs", "supp_fig10.png"), width = 6, height = 8, dpi = 600)
+ggsave(here("output", "figs-manuscript", "supp-figs", "supp_fig11.png"), width = 6, height = 8, dpi = 600)
 
 ```
 
@@ -196,8 +202,8 @@ ggplot(morb_dat) +
   scale_x_continuous("Geographic treatment intensity") +
   scale_y_continuous("Mean MLS resistance abundance") +
   theme(legend.position = "bottom", panel.border = element_rect(fill = NA, color = "black")) + 
-  annotate("text", x = 0.5, y = 100, label = "NOT REAL DATA",
-             hjust = 0.5, vjust = 0.5, col = "grey", cex = 8,
+  annotate("text", x = 0.5, y = 100, label = watermark_text,
+             hjust = 0.5, vjust = 0.5, col = watermark_color, cex = 8,
              fontface = "bold", alpha = 0.5)
   
 ```
@@ -219,8 +225,8 @@ ggplot(morb_dat, aes(x = tx_int, y = prevalence, color = arm)) +
   ggpubr::stat_cor(method = "spearman", cor.coef.name = "rho", p.digits = 0, label.x.npc = "right", hjust = 1,
                    show.legend = FALSE) +
   ggtitle("Prevalence of MLS resistance vs Tx int", subtitle = "p-values are observational") + 
-  annotate("text", x = 0.5, y = 0.3, label = "NOT REAL DATA",
-             hjust = 0.5, vjust = 0.5, col = "grey", cex = 8,
+  annotate("text", x = 0.5, y = 0.3, label = watermark_text,
+             hjust = 0.5, vjust = 0.5, col = watermark_color, cex = 8,
              fontface = "bold", alpha = 0.5)
 
 ```
