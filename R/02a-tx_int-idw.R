@@ -116,5 +116,10 @@ perm_tx <- perm_tx_int %>%
 
 # Save Results ------------------------------------------------------------
 
-saveRDS(morb_tx, here("data", "clean", "morb_tx_int.rds"))
+if(run_public){
+  saveRDS(morb_tx, file.path(path_data_clean, "morb_tx_int.rds"))
+} else {
+  saveRDS(morb_tx, file.path(path_internal, "morb_tx_int.rds"))
+}
+
 saveRDS(perm_tx, here("data", "output", "perm_tx_int.rds"))

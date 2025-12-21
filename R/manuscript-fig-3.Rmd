@@ -196,8 +196,8 @@ rings_map <- ggplot() +
   ) +
   # guides(color = guide_legend(override.aes = list(alpha = 0.7))) +
   guides(color = "none") + 
-  annotate("text", x = 3.16, y = 13.12, label = "NOT\nREAL\nDATA",
-             hjust = 0.5, vjust = 0.5, col = "grey", cex = 20,
+  annotate("text", x = 3.16, y = 13.12, label = watermark_text_ml,
+             hjust = 0.5, vjust = 0.5, col = watermark_color, cex = 20,
              fontface = "bold", alpha = 0.5) 
 
 rings_map
@@ -243,8 +243,8 @@ rings_grappes_plot <- ggplot(subset(morb_rings, outer_radius <= 30)) +
     labels = c("Azithromycin", "Placebo"),
     values = arms_colors
   ) + 
-  annotate("text", x = Inf, y = 2, label = "NOT REAL DATA",
-             hjust = 1, vjust = 1, col = "grey", cex = 6,
+  annotate("text", x = Inf, y = 2, label = watermark_text,
+             hjust = 1, vjust = 1, col = watermark_color, cex = 6,
              fontface = "bold", alpha = 0.5, angle = 0)
 
 rings_grappes_plot
@@ -285,8 +285,8 @@ rings_corr_plot <-
   scale_y_continuous(limits = c(0, 149), name = "MLS resistance gene abundance (normalized reads/million)") +
   theme(legend.position = "bottom",
         panel.spacing.x = unit(1, "cm")) + 
-  annotate("text", x = 15000, y = 75, label = "NOT\nREAL\nDATA",
-             hjust = 0.5, vjust = 0.5, col = "grey", cex = 12,
+  annotate("text", x = 15000, y = 75, label = watermark_text_ml,
+             hjust = 0.5, vjust = 0.5, col = watermark_color, cex = 12,
              fontface = "bold", alpha = 0.5, angle = 0)
 
 rings_corr_plot

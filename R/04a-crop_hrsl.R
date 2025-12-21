@@ -16,6 +16,7 @@ rm(list = ls())
 
 source(here("R", "00-config.R"))
 
+study_admin2 <- c("Falmey", "Boboye", "Loga")
 
 # Load Niger shapefile and filter study area -----------------------------
 
@@ -24,14 +25,13 @@ source(here("R", "00-config.R"))
 
 if(run_public){
   niger_shp <- st_read(file.path(path_data_clean, "niger_shapefiles", "ner_admin2.shp"))
+  study_shp <- niger_shp %>% dplyr::filter(adm2_name %in% study_admin2)
 } else {
   niger_shp <- st_read(here("data", "untouched", "niger_shapefiles", "NER_admbnda_adm2_IGNN_20230720.shp"))
+  study_shp <- niger_shp %>% dplyr::filter(ADM2_FR %in% study_admin2)
 }
 
 # st_crs(niger_shp)
-
-study_admin2 <- c("Falmey", "Boboye", "Loga")
-study_shp <- niger_shp %>% dplyr::filter(adm2_name %in% study_admin2)
 
 study_union <- st_union(study_shp)
 
@@ -66,8 +66,8 @@ if(run_public){
   pop_u5_raw <- data.table::fread(file.path(path_data_clean, "ner_children_under_five_2020.csv"))
   pop_gen_raw <- data.table::fread(file.path(path_data_clean, "ner_general_2020.csv"))
 } else {
-  pop_u5_raw <- data.table::fread(file.path(path_data_clean, "niger_popdens", "ner_children_under_five_2020.csv"))
-  pop_gen_raw <- data.table::fread(file.path(path_data_clean, "niger_popdens", "ner_general_2020.csv"))
+  pop_u5_raw <- data.table::fread(here("data", "untouched", "niger_popdens", "ner_children_under_five_2020.csv"))
+  pop_gen_raw <- data.table::fread(here("data", "untouched", "niger_popdens", "ner_general_2020.csv"))
 }
 
 pop_u5 <- subset(pop_u5_raw, longitude >= bbox_crop["xmin"] & longitude <= bbox_crop["xmax"] & 

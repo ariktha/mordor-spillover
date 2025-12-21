@@ -248,11 +248,11 @@ all_grappes_plot <- ggplot() +
     legend.background = element_rect(fill = "white", color = NA)
   ) +
   guides(color = guide_legend(override.aes = list(color = arms_colors))) + 
-  annotate("text", x = 2.8, y = 13.115, label = "NOT\nREAL\nDATA",
-             hjust = 0.5, vjust = 0.5, col = "grey", cex = 24,
+  annotate("text", x = 2.8, y = 13.115, label = watermark_text_ml,
+             hjust = 0.5, vjust = 0.5, col = watermark_color, cex = 24,
              fontface = "bold", alpha = 0.5)  + 
-  annotate("text", x = 3.52, y = 13.65, label = "NOT\nREAL\nDATA",
-             hjust = 0.5, vjust = 0.5, col = "grey", cex = 16,
+  annotate("text", x = 3.52, y = 13.65, label = watermark_text_ml,
+             hjust = 0.5, vjust = 0.5, col = watermark_color, cex = 16,
              fontface = "bold", alpha = 0.5)
 
 all_grappes_plot
@@ -299,11 +299,11 @@ n_doses_plot <- ggplot() +
     color = guide_legend(override.aes = list(alpha = 0.7), reverse = TRUE),
     size = guide_legend(reverse = TRUE)
   ) + 
-  annotate("text", x = 2.8, y = 13.115, label = "NOT\nREAL\nDATA",
-             hjust = 0.5, vjust = 0.5, col = "grey", cex = 24,
+  annotate("text", x = 2.8, y = 13.115, label = watermark_text_ml,
+             hjust = 0.5, vjust = 0.5, col = watermark_color, cex = 24,
              fontface = "bold", alpha = 0.5)  + 
-  annotate("text", x = 3.52, y = 13.65, label = "NOT\nREAL\nDATA",
-             hjust = 0.5, vjust = 0.5, col = "grey", cex = 16,
+  annotate("text", x = 3.52, y = 13.65, label = watermark_text_ml,
+             hjust = 0.5, vjust = 0.5, col = watermark_color, cex = 16,
              fontface = "bold", alpha = 0.5)
 
 n_doses_plot
@@ -350,11 +350,11 @@ tx_int_layer_plot <- ggplot() + geom_sf(data = niger_shp, fill = "#f9fafa") +
     legend.text = element_text(size = 11),
     legend.spacing.y = unit(0, 'cm')
   ) + 
-  annotate("text", x = 2.8, y = 13.115, label = "NOT\nREAL\nDATA",
-             hjust = 0.5, vjust = 0.5, col = "grey", cex = 24,
+  annotate("text", x = 2.8, y = 13.115, label = watermark_text_ml,
+             hjust = 0.5, vjust = 0.5, col = watermark_color, cex = 24,
              fontface = "bold", alpha = 0.5)  + 
-  annotate("text", x = 3.52, y = 13.65, label = "NOT\nREAL\nDATA",
-             hjust = 0.5, vjust = 0.5, col = "grey", cex = 16,
+  annotate("text", x = 3.52, y = 13.65, label = watermark_text_ml,
+             hjust = 0.5, vjust = 0.5, col = watermark_color, cex = 16,
              fontface = "bold", alpha = 0.5)
 
 tx_int_layer_plot

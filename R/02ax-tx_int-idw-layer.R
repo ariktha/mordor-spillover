@@ -28,9 +28,21 @@ source(here("R", "02ax-layer-fns.R"))
 
 if(run_public){
   niger_shp <- st_read(file.path(path_data_clean, "niger_shapefiles", "ner_admin2.shp"))
+  
+  # Define study region as Falmey, Boboye, and Loga districts in Niger
+  niger_sub <- niger_shp %>%
+    dplyr::filter(adm2_name %in% c("Falmey", "Boboye", "Loga")) %>%
+    st_transform(global_crs)
+  
 } else {
   niger_shp <- st_read(here("data", "untouched", "niger_shapefiles", "NER_admbnda_adm2_IGNN_20230720.shp"))
-}
+  
+  # Define study region as Falmey, Boboye, and Loga districts in Niger
+  niger_sub <- niger_shp %>%
+    dplyr::filter(ADM2_FR %in% c("Falmey", "Boboye", "Loga")) %>%
+    st_transform(global_crs)
+  
+  }
 
 
 # Prep for distance calculation -------------------------------------------
@@ -39,10 +51,7 @@ if(run_public){
 #   left_join(main_gps, by = "grappe") %>%
 #   st_as_sf(coords = c("longitude", "latitude"), crs = global_crs, remove = FALSE)
 
-# Define study region as Falmey, Boboye, and Loga districts in Niger
-niger_sub <- niger_shp %>%
-  dplyr::filter(adm2_name %in% c("Falmey", "Boboye", "Loga")) %>%
-  st_transform(global_crs)
+
 
 niger_boxgrid <- st_make_grid(niger_sub, n = c(pred_grid_dim, pred_grid_dim), what = "centers") %>%
   st_as_sf(crs = global_crs) %>% rename(geometry = x) %>%

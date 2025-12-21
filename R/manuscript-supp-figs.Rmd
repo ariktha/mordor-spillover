@@ -152,8 +152,8 @@ ggplot(data = cor_tx_int_pwr2, aes(group = arm, color = arm)) +
     labels = c("Azithromycin", "Placebo"),
     values = arms_colors
   )  + 
-  annotate("text", x = 0.5, y = 75, label = "NOT\nREAL\nDATA",
-             hjust = 0.5, vjust = 0.5, col = "grey", cex = 16,
+  annotate("text", x = 0.5, y = 75, label = watermark_text_ml,
+             hjust = 0.5, vjust = 0.5, col = watermark_color, cex = 16,
              fontface = "bold", alpha = 0.5)
 
 ggsave(
@@ -240,8 +240,8 @@ ggplot() + geom_boxplot(data = loo_cor,
     labels = c("Azithromycin", "Placebo"),
     values = arms_colors
   ) + 
-  annotate("text", x = 1.5, y = 0.25, label = "NOT\nREAL\nDATA",
-             hjust = 0.5, vjust = 0.5, col = "grey", cex = 12,
+  annotate("text", x = 1.5, y = 0.25, label = watermark_text_ml,
+             hjust = 0.5, vjust = 0.5, col = watermark_color, cex = 12,
              fontface = "bold", alpha = 0.5)
 
 ggsave(
@@ -283,8 +283,8 @@ azithro_doses_plot <- ggplot(data = dat_fig3,
   scale_y_continuous(name = expression("Azithromycin doses\ndistributed in the band x" ~
                                          10^3)) +
   theme(axis.title.y = element_text(hjust = 0.5, vjust = 0.5))  + 
-  annotate("text", x = 10, y = 15, label = "NOT\nREAL\nDATA",
-             hjust = 0.5, vjust = 0.5, col = "grey", cex = 8,
+  annotate("text", x = 10, y = 15, label = watermark_text_ml,
+             hjust = 0.5, vjust = 0.5, col = watermark_color, cex = 8,
              fontface = "bold", alpha = 0.5)
 
 azithro_txint_plot <- ggplot(data = dat_fig3, aes(x = total_children / 1000, y = tx_int)) + 
@@ -295,8 +295,8 @@ azithro_txint_plot <- ggplot(data = dat_fig3, aes(x = total_children / 1000, y =
   scale_x_continuous(name = expression("Number of children in the distance band x" ~
                                          10^3)) +
   scale_y_continuous(name = expression("Geographical treatment\nintensity of azithromycin"))  + 
-  annotate("text", x = 10, y = 0.5, label = "NOT\nREAL\nDATA",
-             hjust = 0.5, vjust = 0.5, col = "grey", cex = 8,
+  annotate("text", x = 10, y = 0.5, label = watermark_text_ml,
+             hjust = 0.5, vjust = 0.5, col = watermark_color, cex = 8,
              fontface = "bold", alpha = 0.5)
 
 supp_fig3_plot <- azithro_doses_plot / azithro_txint_plot +
@@ -376,8 +376,8 @@ p1 <- ggplot(morb_pop,
     labels = c("Azithromycin", "Placebo"),
     values = arms_colors
   ) + 
-  annotate("text", x = 20, y = 15000, label = "NOT\nREAL\nDATA",
-             hjust = 0.5, vjust = 0.5, col = "grey", cex = 10,
+  annotate("text", x = 20, y = 15000, label = watermark_text_ml,
+             hjust = 0.5, vjust = 0.5, col = watermark_color, cex = 10,
              fontface = "bold", alpha = 0.5)
 
 p2 <- ggplot(morb_pop, aes(
@@ -410,8 +410,8 @@ p2 <- ggplot(morb_pop, aes(
   theme(legend.position = "bottom",
         panel.spacing.x = unit(0.6, "cm")) +
   ylim(c(0, 200))  + 
-  annotate("text", x = 20, y = 100, label = "NOT\nREAL\nDATA",
-             hjust = 0.5, vjust = 0.5, col = "grey", cex = 8,
+  annotate("text", x = 20, y = 100, label = watermark_text_ml,
+             hjust = 0.5, vjust = 0.5, col = watermark_color, cex = 8,
              fontface = "bold", alpha = 0.5)
 
 hrsl_plot <- p1 / p2 +
@@ -463,8 +463,8 @@ q1 <- ggplot(morb_csi, aes(y = tx_int, x = dist_csi, color = arm)) +
     labels = c("Azithromycin", "Placebo"),
     values = arms_colors
   ) + 
-  annotate("text", x = 3.8, y = 0.5, label = "NOT REAL DATA",
-             hjust = 0.5, vjust = 0.5, col = "grey", cex = 16,
+  annotate("text", x = 3.8, y = 0.5, label = watermark_text,
+             hjust = 0.5, vjust = 0.5, col = watermark_color, cex = 16,
              fontface = "bold", alpha = 0.5)
 
 q2 <- ggplot(morb_csi, aes(x = dist_csi, y = avg_res, color = arm)) + 
@@ -485,8 +485,8 @@ q2 <- ggplot(morb_csi, aes(x = dist_csi, y = avg_res, color = arm)) +
     values = arms_colors
   ) +
   theme(panel.spacing.x = unit(0.8, "cm")) + 
-  annotate("text", x = 4, y = 65, label = "NOT\nREAL\nDATA",
-             hjust = 0.5, vjust = 0.5, col = "grey", cex = 12,
+  annotate("text", x = 4, y = 65, label = watermark_text_ml,
+             hjust = 0.5, vjust = 0.5, col = watermark_color, cex = 12,
              fontface = "bold", alpha = 0.5)
 
 csi_plot <- q1 / q2 + plot_annotation(tag_levels = 'A') + plot_layout(guides = "collect") &
@@ -634,9 +634,9 @@ other_abs_plot_with_p
 
 other_abs_plot_with_ps <- cowplot::ggdraw(other_abs_plot_with_p) +
   cowplot::draw_label(
-    "NOT REAL DATA", 
+    watermark_text, 
     size = 80, 
-    color = "grey80",
+    color = watermark_color,
     alpha = 0.5,
     angle = 30,
     x = 0.55,    
@@ -739,9 +739,9 @@ other_abs_plot <- fig6_p1 + fig6_p2 + fig6_p3 +
 
 other_abs_plots <- cowplot::ggdraw(other_abs_plot_with_p) +
   cowplot::draw_label(
-    "NOT REAL DATA", 
+    watermark_text, 
     size = 80, 
-    color = "grey80",
+    color = watermark_color,
     alpha = 0.5,
     angle = 30,
     x = 0.55,    
@@ -823,9 +823,9 @@ p <- ggplot() +
 
 s7 <- cowplot::ggdraw(p) +
   cowplot::draw_label(
-    "NOT REAL DATA", 
+    watermark_text, 
     size = 80, 
-    color = "grey80",
+    color = watermark_color,
     alpha = 0.5,
     angle = 30,
     x = 0.55,    
