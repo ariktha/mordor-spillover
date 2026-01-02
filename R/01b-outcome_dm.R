@@ -137,6 +137,7 @@ saveRDS(np_dat, file.path(path_internal, "np_dat.rds"))
 np_dat_pub <- np_dat %>%
   mutate(phase = as.character(phase)) %>%
   dplyr::filter(phase %in% c("Baseline", "24 months")) %>%
-  mutate(phase = factor(phase, levels = c("Baseline", "24 months")))
+  mutate(phase = factor(phase, levels = c("Baseline", "24 months"))) %>%
+  dplyr::select(phase, grappe, n_tested, n_grew, n_res)
 
-saveRDS(np_dat, file.path(path_data_clean, "np_dat.rds"))
+saveRDS(np_dat_pub, file.path(path_data_clean, "np_dat.rds"))
